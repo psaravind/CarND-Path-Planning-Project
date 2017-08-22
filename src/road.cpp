@@ -7,11 +7,12 @@
 #include "vehicle.h"
 #include "helper.h"
 
-Road::Road(int _num_lanes, int lane_num, 
+Road::Road(int _num_lanes, 
+	int lane_num, 
 	double s, 
 	double car_max_vel,
 	int num_lanes,
-	double max_accel) : ego(lane_num, s, 0.1, 50.0) {
+	double max_accel) : ego(lane_num, s, 5, 1) {
 	num_lanes = _num_lanes;
 
 	ego.configure(car_max_vel, num_lanes, max_accel);
@@ -44,20 +45,20 @@ void Road::populate_traffic(vector<vector<double>> sensor_fusion) {
 }
 
 void Road::advance(double car_s) {
-
+//cout << " a:" << ego.a << " v:" << ego.v << endl;
 	map<int, vector<vector<double>>> predictions;
+	ego.s = car_s;
 	predictions[-1] = ego.generate_predictions(50);
 
 	for (auto val : vehicles)
 		predictions[val.first] = val.second.generate_predictions(50);
 
-	ego.s = car_s;
 	ego.update_state(predictions);
 	ego.realize_state(predictions);
-	ego.increment(1, true);
-	
-	for (auto val : vehicles)
-		val.second.increment(1, false);
+	ego.ego_increment(1);
+	cout << " a:" << ego.a << " v:" << ego.v << endl;
+	//for (auto val : vehicles)// TODO: is this needed
+	//	val.second.increment(1);// TODO: is this needed
 }
 
 int Road::getLane(double d) {

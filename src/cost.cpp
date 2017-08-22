@@ -13,7 +13,14 @@ double Cost::calculate_cost(const Vehicle &vehicle,
 	map<int, vector <vector<double>>> predictions) {
 	TrajectoryData trajectory_data = get_helper_data(vehicle, trajectories, predictions);
 
-	double cost = 0;
+	/*cout << " proposed_lane:" << trajectory_data.proposed_lane << 
+		" avg_speed:" << trajectory_data.avg_speed <<
+		" max_acceleration:" << trajectory_data.max_acceleration <<
+		" closest_approach:" << trajectory_data.closest_approach <<
+		" collides:" << trajectory_data.collides << 
+		" collides_at:" << trajectory_data.collides_at << endl;*/
+		
+	double cost = 0.0;
 
 	cost += inefficiency_cost(vehicle, trajectories, predictions, trajectory_data);
 	cost += collision_cost(vehicle, trajectories, predictions, trajectory_data);
@@ -38,16 +45,18 @@ TrajectoryData Cost::get_helper_data(Vehicle vehicle,
 
 	trajectory_data.proposed_lane = first.lane;
 
-	trajectory_data.avg_speed = (last.s - current_snapshot.s) / dt;
+	trajectory_data.avg_speed = ((last.s - current_snapshot.s) / dt) * 50; // TODO CHECK
 
 	vector<double> accels;
 
-	double closest_approach = 9999999.0;
+	double closest_approach = 999999.0;
 	bool collides = false;
 
 	map<int, vector<vector<double>>> filtered = filter_predictions_by_lane(predictions, 
 		trajectory_data.proposed_lane);
 
+	trajectory_data.collides = false;
+	trajectory_data.collides_at = 0;
 	for (int i = 1; i < (PLANNING_HORIZON + 1); i++) {
 		Snapshot snapshot = trajectories[i];
 
@@ -62,7 +71,17 @@ TrajectoryData Cost::get_helper_data(Vehicle vehicle,
 
 			bool vehicle_collides = check_collision(snapshot, last_state[1], state[1]);
 			if (vehicle_collides) {
-				cout << "vehicle_collides:" << vehicle_collides << endl;
+				/*for(auto pred : predictions) {
+					vector<vector<double>> values = pred.second;
+					cout << "pred first:" << pred.first << " [0]:" << values[0].size() << " [1]:" << values[1].size() << endl; 
+				}
+				for(auto traj : trajectories)
+					cout << "T<" << i << "> lane:" << traj.lane 
+				         << " s:" << traj.s 
+						 << " v:" << traj.v 
+						 << " a:" << traj.a 
+						 << " state:" << traj.state << endl;
+				cout << "vehicle_collides:" << vehicle_collides << " at:" << i << " in lane:" << trajectory_data.proposed_lane << endl;*/
 				trajectory_data.collides = true;
 				trajectory_data.collides_at = double(i);
 			}
@@ -88,11 +107,8 @@ map<int, vector<vector<double>>> Cost::filter_predictions_by_lane(map<int, vecto
 	map<int, vector<vector<double>>> filtered;
 
 	for (auto val: predictions) {
-		int v_id = val.first;
-		vector<vector<double>> predicted_traj = val.second;
-
-		if (predicted_traj[0][0] == lane && v_id != -1) {
-			filtered[v_id] = predicted_traj;
+		if (val.second[0][0] == lane && val.first != -1) {
+			filtered[val.first] = val.second;
 		}
 	}
 
@@ -140,7 +156,8 @@ double Cost::collision_cost(Vehicle vehicle,
 		double time_til_collision = data.collides_at;
 		double exponent = time_til_collision * time_til_collision;
 		double multiplier = exp(-exponent);
-
+		
+		//cout << "Cost::collision_cost data.collides_at:" << data.collides_at << endl;
 		return multiplier * COLLISION;
 	}
 

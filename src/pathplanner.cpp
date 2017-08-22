@@ -6,11 +6,12 @@ PathPlanner::PathPlanner(int num_lanes,
 	vector<double> _map_waypoints_y,
 	vector<double> _map_waypoints_s,
 	vector<double> _map_waypoints_dx,
-	vector<double> _map_waypoints_dy):road(num_lanes, 1, 
+	vector<double> _map_waypoints_dy):road(num_lanes, 
+		1, 
 		0, 
 		_car_max_vel,
 		3,
-		50) {
+		.5) {
 
 	car_max_vel = _car_max_vel;
 	map_waypoints_x = _map_waypoints_x;
@@ -22,7 +23,7 @@ PathPlanner::PathPlanner(int num_lanes,
 
 PathPlanner::~PathPlanner() {}
 
-vector<double> PathPlanner::GeneratePath(vector<double> car_data,
+vector<vector<double>> PathPlanner::GeneratePath(vector<double> car_data,
 	vector<vector<double>> _sensor_fusion,
 	vector<vector<double>> path_data,
 	vector<double> _end_path_sd) {
@@ -46,17 +47,15 @@ vector<double> PathPlanner::GeneratePath(vector<double> car_data,
 	road.populate_traffic(sensor_fusion);
 	road.advance(car_s);
 
-	vector<double> path;
-
 	car_ref_vel = road.ego.v;
 	car_lane = road.ego.lane;
 
-	cout << "Ego: S = " << road.ego.s
+	/*cout << "Ego: S = " << road.ego.s
 		<< ", Lane = " << road.ego.lane
 		<< ", Accel = " << road.ego.a
 		<< ", Velocity = " << road.ego.v
 		<< ", State = " << road.ego.state
-		<< endl;
+		<< endl;*/
 
 	vector<double> ptsx;
 	vector<double> ptsy;
@@ -88,9 +87,21 @@ vector<double> PathPlanner::GeneratePath(vector<double> car_data,
 		ptsy.push_back(ref_y);
 	}
 
-	vector<double> next_wp0 = getXY(car_s + 30, (2 + 4 * car_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
-	vector<double> next_wp1 = getXY(car_s + 60, (2 + 4 * car_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
-	vector<double> next_wp2 = getXY(car_s + 90, (2 + 4 * car_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+	vector<double> next_wp0 = getXY(car_s + 30, 
+		(2 + 4 * car_lane), 
+		map_waypoints_s, 
+		map_waypoints_x, 
+		map_waypoints_y);
+	vector<double> next_wp1 = getXY(car_s + 60, 
+		(2 + 4 * car_lane), 
+		map_waypoints_s, 
+		map_waypoints_x, 
+		map_waypoints_y);
+	vector<double> next_wp2 = getXY(car_s + 90, 
+		(2 + 4 * car_lane), 
+		map_waypoints_s, 
+		map_waypoints_x, 
+		map_waypoints_y);
 
 	ptsx.push_back(next_wp0[0]);
 	ptsx.push_back(next_wp1[0]);
@@ -112,9 +123,12 @@ vector<double> PathPlanner::GeneratePath(vector<double> car_data,
 			
 	s.set_points(ptsx, ptsy);
 
+	vector<double> next_x_vals;
+	vector<double> next_y_vals;
+	
 	for (int i = 0; i < previous_path_x.size(); i++) {
-		path.push_back(previous_path_x[i]);
-		path.push_back(previous_path_y[i]);
+		next_x_vals.push_back(previous_path_x[i]);
+		next_y_vals.push_back(previous_path_y[i]);
 	}
 
 	double target_x = 30.0;
@@ -139,9 +153,9 @@ vector<double> PathPlanner::GeneratePath(vector<double> car_data,
 		x_point += ref_x;
 		y_point += ref_y;
 
-		path.push_back(x_point);
-		path.push_back(y_point);
+		next_x_vals.push_back(x_point);
+		next_y_vals.push_back(y_point);
 	}
 
-	return path;
+	return {next_x_vals, next_y_vals};
 }

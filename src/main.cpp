@@ -156,23 +156,15 @@ int main(int argc, char* argv[]) {
 						j[1]["end_path_d"]
 					};
 
-					vector<double> path_plan = planner.GeneratePath(car_data, sensor_fusion, path_data, end_path_sd);
+					vector<vector<double>> next_vals = planner.GeneratePath(car_data, 
+						sensor_fusion, 
+						path_data, 
+						end_path_sd);
 					
 					json msgJson;
 
-					vector<double> next_x_vals;
-					vector<double> next_y_vals;
-					
-					for (size_t i = 0; i < path_plan.size(); i++) {
-						if (i % 2 == 0) {
-							next_x_vals.push_back(path_plan[i]);
-						} else {
-							next_y_vals.push_back(path_plan[i]);
-						}
-					}
-
-					msgJson["next_x"] = next_x_vals;
-					msgJson["next_y"] = next_y_vals;
+					msgJson["next_x"] = next_vals[0];
+					msgJson["next_y"] = next_vals[1];
 
 					auto msg = "42[\"control\","+ msgJson.dump()+"]";
 
@@ -205,7 +197,7 @@ int main(int argc, char* argv[]) {
 	});
 
 	h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> ws, int code,
-							 char *message, size_t length) {
+		char *message, size_t length) {
 		ws.close();
 		std::cout << "Disconnected" << std::endl;
 	});

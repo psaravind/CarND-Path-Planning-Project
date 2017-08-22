@@ -27,7 +27,7 @@ class Vehicle {
 		string state;
 	};
 
-	int preferred_buffer = 1;
+	int preferred_buffer = 20;
 
 	int lane;
 	int lanes_available;
@@ -65,7 +65,8 @@ class Vehicle {
 
 	string display();
 
-	void increment(int dt, bool skip_s);
+	void increment(int dt);
+	void ego_increment(int dt);	
 
 	vector<double> state_at(int t);
 

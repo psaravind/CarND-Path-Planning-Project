@@ -51,7 +51,7 @@ class PathPlanner {
 
 	~PathPlanner();
 
-	vector<double> GeneratePath(vector<double> car_data,
+	vector<vector<double>> GeneratePath(vector<double> car_data,
 		vector<vector<double>> sensor_fusion,
 		vector<vector<double>> path_data,
 		vector<double> end_path_sd);

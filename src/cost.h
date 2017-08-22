@@ -23,12 +23,11 @@ struct TrajectoryData {
 };
 
 // priority levels for costs
-const double COLLISION  = pow(10.0, 5);//6);//7);
-const double DANGER     = pow(10.0, 4);//5);
-const double COMFORT    = pow(10.0, 3);//4);//3);
-const double EFFICIENCY = pow(10.0, 3);//2);//1);
+const double COLLISION  = pow(10.0, 6);
+const double DANGER     = pow(10.0, 5);
+const double EFFICIENCY = pow(10.0, 2);
 
-const int PLANNING_HORIZON = 1;//20;
+const int PLANNING_HORIZON = 20;
 const double DESIRED_BUFFER = 2;//10;
 
 class Vehicle;
