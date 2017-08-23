@@ -27,8 +27,7 @@ const double COLLISION  = pow(10.0, 6);
 const double DANGER     = pow(10.0, 5);
 const double EFFICIENCY = pow(10.0, 2);
 
-const int PLANNING_HORIZON = 20;
-const double DESIRED_BUFFER = 2;//10;
+const double DESIRED_BUFFER = 20;
 
 class Vehicle;
 
@@ -54,18 +53,12 @@ class Cost {
 			double s_now);
 
 		double inefficiency_cost(Vehicle vehicle, 
-			vector<Snapshot> trajectories, 
-			map<int, vector<vector<double>>> predictions, 
 			TrajectoryData data);
 
 		double collision_cost(Vehicle vehicle, 
-			vector<Snapshot> trajectories, 
-			map<int, vector<vector<double>>> predictions, 
 			TrajectoryData data);
 
-		double buffer_cost(Vehicle vehicle, 
-			vector<Snapshot> trajectories, 
-			map<int, vector<vector<double>>> predictions, 
+		double buffer_cost(Vehicle vehicle,  
 			TrajectoryData data);
 };
 #endif /* COST_H */

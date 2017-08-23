@@ -47,7 +47,7 @@ void Vehicle::configure(double car_max_vel,
 
 vector<vector<double>> Vehicle::generate_predictions(int horizon) {
 	vector<vector<double>> predictions;
-
+	
 	for (int i = 0; i < horizon; i++) {
 		vector<double> check = state_at(i);
 		vector<double> prediction = {check[0], check[1]};
@@ -85,32 +85,44 @@ void Vehicle::update_state(map<int, vector <vector<double>>> predictions) {
 	if (state.compare("PLCR") == 0)
 		states = {"KL", "PLCR", "LCR"};
 
-	if (state.compare("LCR") == 0)
-		states = {"KL"};//, "LCR"};
+/*	if (state.compare("LCR") == 0)
+		if (lane < lanes_available)
+			states = {"KL", "LCR"};
+		else
+			states = {"KL"};
 
 	if (state.compare("LCL") == 0)
-		states = {"KL"};//, "LCL"};
+		if (lane > 0)
+			states = {"KL", "LCL"};
+		else
+			states = {"KL"};*/
+
+	if (state.compare("LCR") == 0)
+		states = {"KL"};
+	if (state.compare("LCL") == 0)
+		states = {"KL"};
 
 	map<string, double> new_costs;
 	for (auto _state : states) {
-		//cout << "state:" << _state;
+		cout << "state:" << _state;
 		vector<Snapshot> trajectories = trajectories_for_state(_state, predictions, 50);
 		new_costs[_state] = cost.calculate_cost(*this, trajectories, predictions);
 	}
-
-	for(auto val: new_costs)
-		cout << val.first << " " << double(val.second) << " ";
 	
-	double max = std::numeric_limits<double>::infinity();;
-	for (auto val: new_costs) {
-		if (val.second < max) {
-			max = val.second;
-			state = val.first;
+	double min = std::numeric_limits<double>::infinity();;
+	for (auto _state : states) {
+		cout << _state << " " << new_costs[_state] << " ";
+		if (new_costs[_state] < min) {
+			min = new_costs[_state];
+			state = _state;
 		}
 	}
 	
-	//pair<string, double> min = *min_element(new_costs.begin(), new_costs.end());
-	//state = min.first;
+	if ((fabs(new_costs["KL"] - new_costs["PLCL"]) < std::numeric_limits<double>::epsilon()) ||
+		(fabs(new_costs["KL"] - new_costs["PLCR"]) < std::numeric_limits<double>::epsilon())) {
+		state = "KL";
+	}
+
 	cout << "min state:" << state << " s:" << s;
 }
 
@@ -134,7 +146,7 @@ vector<Snapshot> Vehicle::trajectories_for_state(string _state,
 		
 		realize_state(predictions);
 		ego_increment(1);
-
+		if (lane >= lanes_available) cout << "DANGER Vehicle::trajectories_for_state lane:" << lane << endl;
 		trajectories.insert(trajectories.end(), Snapshot(lane, s, v, a, state));
 	}
 
@@ -191,9 +203,9 @@ void Vehicle::increment(int dt) {
 
 void Vehicle::ego_increment(int dt) {
 	double ddt = double(dt) * 0.02;
-
+	a = max(-.6, min(1.0, a)); ///// TODO WHY WHY
+	
 	s += v * ddt;  
-	//v += a * ddt;
 	v += a * ddt * 50;
 
 	v = max(0.0, v);
@@ -257,7 +269,7 @@ void Vehicle::realize_lane_change(map<int, vector<vector<double>>> predictions,
 
 	lane += delta;
 
-	lane = max(0, min(lanes_available, lane));
+	lane = max(0, min(lanes_available - 1, lane));
 
 	a = _max_accel_for_lane(predictions, lane, s);
 }
@@ -306,10 +318,11 @@ void Vehicle::realize_prep_lane_change(map<int, vector<vector<double>>> predicti
 	string direction) {
 
 	int delta = 1;
-	if (direction.compare("R") == 0)  //  NOTE WAS L
+	if (direction.compare("L") == 0)  //  NOTE WAS L  got DANGER with R, changing back to L
 		delta = -1;
 
 	int _lane = lane + delta;
+
 
 	vector<vector<vector<double>>> at_behind;
 	for (auto val: predictions) {
@@ -355,10 +368,12 @@ void Vehicle::realize_prep_lane_change(map<int, vector<vector<double>>> predicti
 				aa = -max_acceleration;
 
 			a = aa;
+			//cout << "here 0 a:" << a << endl;
 		} else {
 			double my_min_acc = max(-max_acceleration, -delta_s);
 
 			a = my_min_acc;
+			//cout << "here 1 a:" << a << endl;			
 		}
 	}
 }

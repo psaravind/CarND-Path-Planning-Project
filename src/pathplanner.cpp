@@ -11,7 +11,7 @@ PathPlanner::PathPlanner(int num_lanes,
 		0, 
 		_car_max_vel,
 		3,
-		.5) {
+		.4) {
 
 	car_max_vel = _car_max_vel;
 	map_waypoints_x = _map_waypoints_x;

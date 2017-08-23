@@ -12,7 +12,7 @@ Road::Road(int _num_lanes,
 	double s, 
 	double car_max_vel,
 	int num_lanes,
-	double max_accel) : ego(lane_num, s, 5, 1) {
+	double max_accel) : ego(lane_num, s, 3, .25) {
 	num_lanes = _num_lanes;
 
 	ego.configure(car_max_vel, num_lanes, max_accel);
@@ -40,12 +40,13 @@ void Road::populate_traffic(vector<vector<double>> sensor_fusion) {
 
 		Vehicle vehicle = Vehicle(sensor_lane, sensor_s, sensor_speed);
 		vehicle.state = "KL";
-		vehicles.insert(std::pair<int, Vehicle>(sensor_id, vehicle));
+	//	if (sensor_lane < 0 || sensor_lane > num_lanes - 1) {}
+	//	else
+			vehicles.insert(std::pair<int, Vehicle>(sensor_id, vehicle));
 	} 
 }
 
 void Road::advance(double car_s) {
-//cout << " a:" << ego.a << " v:" << ego.v << endl;
 	map<int, vector<vector<double>>> predictions;
 	ego.s = car_s;
 	predictions[-1] = ego.generate_predictions(50);
@@ -55,10 +56,9 @@ void Road::advance(double car_s) {
 
 	ego.update_state(predictions);
 	ego.realize_state(predictions);
+	cout << " before a:" << ego.a << " v:" << ego.v;
 	ego.ego_increment(1);
-	cout << " a:" << ego.a << " v:" << ego.v << endl;
-	//for (auto val : vehicles)// TODO: is this needed
-	//	val.second.increment(1);// TODO: is this needed
+	cout << " after a:" << ego.a << " v:" << ego.v << endl << endl;
 }
 
 int Road::getLane(double d) {
