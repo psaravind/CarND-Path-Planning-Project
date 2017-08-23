@@ -122,10 +122,7 @@ bool Cost::check_collision(Snapshot snapshot,
 double Cost::inefficiency_cost(Vehicle vehicle, 
 	TrajectoryData data) {
 
-	double speed = data.avg_speed;
-	double target_speed = vehicle.target_speed;
-	double diff = target_speed - speed;
-	double pct = diff / target_speed;
+	double pct = (vehicle.max_speed - data.avg_speed) / vehicle.max_speed;
 	double multiplier = pct * pct;
   
 	return multiplier * EFFICIENCY;
@@ -135,8 +132,7 @@ double Cost::collision_cost(Vehicle vehicle,
 	TrajectoryData data) {
 
 	if (data.collides) {
-		double time_til_collision = data.collides_at;
-		double exponent = time_til_collision * time_til_collision;
+		double exponent = data.collides_at * data.collides_at;
 		double multiplier = exp(-exponent);
 		
 		return multiplier * COLLISION;

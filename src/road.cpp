@@ -10,12 +10,13 @@
 Road::Road(int _num_lanes, 
 	int lane_num, 
 	double s, 
-	double car_max_vel,
+	double max_speed,
 	int num_lanes,
-	double max_accel) : ego(lane_num, s, 3, .25) {
+	double max_accel,
+	double min_car_distance) : ego(lane_num, s, 3, .25) {
 	num_lanes = _num_lanes;
 
-	ego.configure(car_max_vel, num_lanes, max_accel);
+	ego.configure(max_speed, num_lanes, max_accel, min_car_distance);
 
 	ego.state = "KL";
 }
@@ -40,9 +41,7 @@ void Road::populate_traffic(vector<vector<double>> sensor_fusion) {
 
 		Vehicle vehicle = Vehicle(sensor_lane, sensor_s, sensor_speed);
 		vehicle.state = "KL";
-	//	if (sensor_lane < 0 || sensor_lane > num_lanes - 1) {}
-	//	else
-			vehicles.insert(std::pair<int, Vehicle>(sensor_id, vehicle));
+		vehicles.insert(std::pair<int, Vehicle>(sensor_id, vehicle));
 	} 
 }
 

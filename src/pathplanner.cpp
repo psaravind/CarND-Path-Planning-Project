@@ -1,7 +1,8 @@
 #include "pathplanner.h"
 
 PathPlanner::PathPlanner(int num_lanes,
-	double _car_max_vel,
+	double _max_speed,
+	double _min_car_distance,
 	vector<double> _map_waypoints_x,
 	vector<double> _map_waypoints_y,
 	vector<double> _map_waypoints_s,
@@ -9,11 +10,12 @@ PathPlanner::PathPlanner(int num_lanes,
 	vector<double> _map_waypoints_dy):road(num_lanes, 
 		1, 
 		0, 
-		_car_max_vel,
+		_max_speed,
 		3,
-		.4) {
+		.4,
+		_min_car_distance) {
 
-	car_max_vel = _car_max_vel;
+	max_speed = _max_speed;
 	map_waypoints_x = _map_waypoints_x;
 	map_waypoints_y = _map_waypoints_y;
 	map_waypoints_s = _map_waypoints_s;
@@ -49,13 +51,6 @@ vector<vector<double>> PathPlanner::GeneratePath(vector<double> car_data,
 
 	car_ref_vel = road.ego.v;
 	car_lane = road.ego.lane;
-
-	/*cout << "Ego: S = " << road.ego.s
-		<< ", Lane = " << road.ego.lane
-		<< ", Accel = " << road.ego.a
-		<< ", Velocity = " << road.ego.v
-		<< ", State = " << road.ego.state
-		<< endl;*/
 
 	vector<double> ptsx;
 	vector<double> ptsy;

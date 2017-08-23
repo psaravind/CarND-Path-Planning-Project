@@ -31,7 +31,7 @@ class PathPlanner {
 		int car_lane = 1;
 
 		double car_ref_vel = 0.1;
-		double car_max_vel;
+		double max_speed;
 
 		vector<vector<double>> sensor_fusion;
 		vector<double> previous_path_x;
@@ -43,6 +43,7 @@ class PathPlanner {
  	Road road;
 	PathPlanner(int num_lanes,
 		double car_max_vel,
+		double min_car_distance,
 		vector<double> map_waypoints_x,
 		vector<double> map_waypoints_y,
 		vector<double> map_waypoints_s,

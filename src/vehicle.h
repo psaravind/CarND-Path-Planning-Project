@@ -30,13 +30,14 @@ class Vehicle {
 	int preferred_buffer = 20;
 
 	int lane;
-	int lanes_available;
+	int num_lanes;
 
 	double s;
 	double v;
 	double a;
-	double target_speed;
+	double max_speed;
 	double max_acceleration;
+	double min_car_distance;
 
 	string state;
 
@@ -59,9 +60,10 @@ class Vehicle {
 		map<int, vector <vector<double>>> predictions, 
 		int horizon = 5);
 
-	void configure(double car_max_vel,
-		int num_lanes,
-		double max_accel);
+	void configure(double _max_speed,
+		int _num_lanes,
+		double _max_acceleration,
+		double _min_car_distance);
 
 	string display();
 
@@ -78,13 +80,15 @@ class Vehicle {
 
 	void realize_constant_speed();
 
-	double _max_accel_for_lane(map<int, vector<vector<double>>> predictions, int lane, double s);
+	double _max_accel_for_lane(map<int, vector<vector<double>>> predictions);
 
 	void realize_keep_lane(map<int, vector< vector<double>>> predictions);
 
-	void realize_lane_change(map<int, vector<vector<double>>> predictions, string direction);
+	void realize_lane_change(map<int, vector<vector<double>>> predictions, 
+		string direction);
 
-	void realize_prep_lane_change(map<int, vector<vector<double>>> predictions, string direction);
+	void realize_prep_lane_change(map<int, vector<vector<double>>> predictions, 
+		string direction);
 
 	vector<vector<double>> generate_predictions(int horizon = 5);
 };

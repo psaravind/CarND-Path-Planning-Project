@@ -16,9 +16,10 @@ class Road {
 
 		Road(int _num_lanes, int lane_num, 
 			double s, 
-			double car_max_vel,
+			double max_speed,
 			int num_lanes,
-			double max_accel);
+			double max_accel,
+			double min_car_distance);
 		~Road();
 
 		void populate_traffic(vector<vector<double>> sensor_fusion);
