@@ -42,8 +42,13 @@ class PathPlanner {
  public:
  	Road road;
 	PathPlanner(int num_lanes,
-		double car_max_vel,
-		double min_car_distance,
+		int start_lane,
+		double s,
+		double v,
+		double a,
+		double _max_speed,
+		double _min_car_distance,
+		double _max_acceleration,
 		vector<double> map_waypoints_x,
 		vector<double> map_waypoints_y,
 		vector<double> map_waypoints_s,

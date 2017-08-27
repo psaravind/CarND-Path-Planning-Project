@@ -1,8 +1,7 @@
 #include "helper.h"
 #include <cmath>
 #include <vector>
-
-using namespace std;
+#include <iostream>
 
 // For converting back and forth between radians and degrees.
 double deg2rad(double x) { return x * pi() / 180; }

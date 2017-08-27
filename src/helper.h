@@ -39,4 +39,16 @@ vector<double> getXY(double s,
 	vector<double> maps_x, 
 	vector<double> maps_y);
 
+class Prediction {
+	public:
+		int lane;
+		double s;
+		double v;
+		double a;
+
+	Prediction() {};
+
+	virtual ~Prediction() {};
+};
+
 #endif /* HELPER_H */

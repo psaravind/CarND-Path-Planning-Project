@@ -65,6 +65,11 @@ int main(int argc, char* argv[]) {
 	double decrement_velocity = .35; //.224;
 	double min_car_distance = 120.0;
 	int num_lanes = 3;
+	int start_lane = 1;
+	double s;
+	double v = 3;
+	double a = 1.5;
+	double max_acceleration = 1.5;
 
 	if (cmdOptionExists(argv, argv + argc, "-d")) {
 		debug = true;
@@ -111,8 +116,13 @@ int main(int argc, char* argv[]) {
 	}
 
 	PathPlanner planner = PathPlanner(num_lanes,
+		start_lane,
+		s,
+		v,
+		a,
 		max_speed,
 		min_car_distance,
+		max_acceleration,
 		map_waypoints_x, 
 		map_waypoints_y, 
 		map_waypoints_s, 

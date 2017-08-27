@@ -1,18 +1,24 @@
 #include "pathplanner.h"
 
 PathPlanner::PathPlanner(int num_lanes,
+	int start_lane,
+	double s,
+	double v,
+	double a,
 	double _max_speed,
 	double _min_car_distance,
+	double _max_acceleration,
 	vector<double> _map_waypoints_x,
 	vector<double> _map_waypoints_y,
 	vector<double> _map_waypoints_s,
 	vector<double> _map_waypoints_dx,
 	vector<double> _map_waypoints_dy):road(num_lanes, 
-		1, 
-		0, 
+		start_lane, // 1, 
+		s,
+		v, //0
+		a, //.25
 		_max_speed,
-		3,
-		.4,
+		_max_acceleration, //.4, //2.5, //.4
 		_min_car_distance) {
 
 	max_speed = _max_speed;
@@ -47,7 +53,8 @@ vector<vector<double>> PathPlanner::GeneratePath(vector<double> car_data,
 		car_s = end_path_sd[0];
 
 	road.populate_traffic(sensor_fusion);
-	road.advance(car_s);
+	road.advance(car_s,
+		car_speed);
 
 	car_ref_vel = road.ego.v;
 	car_lane = road.ego.lane;

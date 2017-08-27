@@ -3,28 +3,28 @@
 
 #include "vehicle.h"
 
-using namespace std;
-
 const int LANE_WIDTH = 4;
-const int LANE_CENTR = LANE_WIDTH / 2;
 
 class Road {
 	public:
 		Vehicle ego;
-		int num_lanes;
 		map<int, Vehicle> vehicles;
 
-		Road(int _num_lanes, int lane_num, 
+		Road(int num_lanes, 
+			int start_lane, 
 			double s, 
+			double v,
+			double a,
 			double max_speed,
-			int num_lanes,
-			double max_accel,
+			double max_acceleration,
 			double min_car_distance);
 		~Road();
 
 		void populate_traffic(vector<vector<double>> sensor_fusion);
 
-		void advance(double car_s);
-		int getLane(double d);		
+		void advance(double car_s,
+			double car_speed);
+		int getLane(double d);
 };
+
 #endif /* ROAD_H */

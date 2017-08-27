@@ -2,98 +2,162 @@
 #include <math.h>
 #include <map>
 #include <string>
+#include <iostream>
 #include "vehicle.h"
 #include "snapshot.h"
+#include "helper.h"
 
 Cost::Cost() {}
 Cost::~Cost() {}
 
-double Cost::calculate_cost(const Vehicle &vehicle, 
-	vector<Snapshot> trajectories, 
-	map<int, vector <vector<double>>> predictions) {
-	TrajectoryData trajectory_data = get_helper_data(vehicle, trajectories, predictions);
+double Cost::calculate_cost(const Vehicle &ego, 
+	string state,
+	int num_lanes,
+	vector<Snapshot> trajectories,
+	vector<Prediction> ego_predictions,
+	map<int, vector<Prediction>> vehicle_predictions) {
+	TrajectoryData trajectory_data = get_helper_data(ego,
+		ego_predictions, 
+		state,
+		num_lanes,
+		trajectories, 
+		vehicle_predictions);
 
 	cout << " proposed_lane:" << trajectory_data.proposed_lane << 
 		" avg_speed:" << trajectory_data.avg_speed <<
 		" max_acceleration:" << trajectory_data.max_acceleration <<
-		" closest_approach:" << trajectory_data.closest_approach <<
-		" collides:" << trajectory_data.collides << 
-		" collides_at:" << trajectory_data.collides_at << endl;
+		" c_f:" << trajectory_data.c_front << 
+		" c_f_at:" << trajectory_data.c_front_at <<
+		" c_b:" << trajectory_data.c_back << 
+		" c_b_at:" << trajectory_data.c_back_at;
 		
 	double cost = 0.0;
+	double c;
+	
+	c = inefficiency_cost(ego, trajectory_data);
+	if (c != 0)
+		cout << " c1:" << c;
+	cost += c;
+	c = collision_cost(ego, trajectory_data);
+	if (c != 0)
+		cout << " c2:" << c;
+	cost += c;
+	c = buffer_cost(ego, trajectory_data);
+	if (c != 0)
+		cout << " c3:" << c;
+	cost += c;
+	if (state.compare("KL") != 0) {
+		c = change_lane_cost(ego, trajectory_data);
+		if (c != 0)
+			cout << " c4:" << c;
+		cost += c;
+	}
 
-	cost += inefficiency_cost(vehicle, trajectory_data);
-	cost += collision_cost(vehicle, trajectory_data);
-	cost += buffer_cost(vehicle, trajectory_data);
-
+	cout << " " << endl;
+	
 	return cost;
 }
 
-TrajectoryData Cost::get_helper_data(Vehicle vehicle, 
+TrajectoryData Cost::get_helper_data(Vehicle ego,
+	vector<Prediction> ego_predictions, 
+	string state,
+	int num_lanes,
 	vector<Snapshot> trajectories, 
-	map<int, vector <vector<double>>> predictions) {
+	map<int, vector<Prediction>> predictions) {
 
+	int min_car_distance = 120;
 	TrajectoryData trajectory_data;
-
-	vector<Snapshot> t = trajectories;
-
-	Snapshot current_snapshot = t[0];
-	Snapshot first = t[1];
-	Snapshot last = t.back();
-
+	Snapshot current_snapshot = trajectories[0];
+	Snapshot first = trajectories[1];
+	Snapshot last = trajectories.back();
 	double dt = trajectories.size();
-
-	trajectory_data.proposed_lane = first.lane;
-
-	trajectory_data.avg_speed = ((last.s - current_snapshot.s) / dt);
-
 	vector<double> accels;
 
-	trajectory_data.closest_approach = 9999999.0;
+	double delta = 1;
+	if (state.compare("KL") == 0)
+		delta = 0;
+	else if (state.compare("PLCL") == 0 || state.compare("LCL") == 0)
+		delta = -1;
 
-	map<int, vector<vector<double>>> filtered = filter_predictions_by_lane(predictions, 
+	trajectory_data.proposed_lane = ego.lane + delta;
+	trajectory_data.proposed_lane = max(0, min(num_lanes - 1, trajectory_data.proposed_lane));
+	trajectory_data.avg_speed = (last.s - current_snapshot.s) / dt;
+
+	map<int, vector<Prediction>> filtered = filter_predictions_by_lane(predictions, 
 		trajectory_data.proposed_lane);
 
-	trajectory_data.collides = false;
-	trajectory_data.collides_at = 0;
-	
-	Snapshot snapshot = trajectories[1];
-	accels.insert(accels.end(), snapshot.a);
+	trajectory_data.c_front = false;
+	trajectory_data.c_front_at = 0;
+	vector<Prediction> in_front;
 
 	for (auto val: filtered) {
-		int v_id = val.first;
+		vector<Prediction> prediction = val.second;
+		Prediction first_Prediction = prediction[1];
+		
+		if (first_Prediction.s > ego.s)
+			in_front.push_back(first_Prediction);
+	}
+  
+	if (in_front.size() > 0) {
+		double min_s = min_car_distance;
 
-		vector<vector<double>> v = val.second;
-		vector<double> state = v[1];
-		vector<double> last_state = v[0];
-
-		bool vehicle_collides = check_collision(snapshot, last_state[1], state[1]);
-		if (vehicle_collides) {
-			trajectory_data.collides = true;
-			trajectory_data.collides_at = state[1];
+		for (int i = 0; i < in_front.size(); i++) {
+			if (in_front[i].s - ego_predictions[1].s < min_s) {
+				trajectory_data.c_front = true;
+				trajectory_data.c_front_at = in_front[i].s;
+				min_s = in_front[i].s - ego_predictions[1].s;
+			}
 		}
-
-		int dist = abs(state[1] - snapshot.s);
-		if (dist < trajectory_data.closest_approach) 
-			trajectory_data.closest_approach = dist;
 	}
 
-	int num_accels = accels.size();
-	trajectory_data.max_acceleration = 0;
-	for (int i = 0; i < num_accels; i++) {
-		if (abs(accels[i]) > trajectory_data.max_acceleration) 
-			trajectory_data.max_acceleration = abs(accels[i]);
+	trajectory_data.c_back = false;
+	trajectory_data.c_back_at = 0;
+	vector<Prediction> at_behind;
+	
+	if (state.compare("KL") != 0) {
+		for (auto val: filtered) {
+			vector<Prediction> prediction = val.second;
+			Prediction first_Prediction = prediction[1];
+			
+			if (first_Prediction.s <= ego.s)
+				at_behind.push_back(first_Prediction);
+		}
+
+		if (at_behind.size() > 0) {
+			double max_s = -999999.0;
+
+			for (int i = 0; i < at_behind.size(); i++) {
+				Prediction prediction = at_behind[i];
+				if (prediction.s > max_s)
+					max_s = prediction.s;
+			}
+			if ( max_s > ego_predictions[0].s - min_car_distance) {
+					trajectory_data.c_back = true;
+					trajectory_data.c_back_at = max_s;
+			}
+		}
+	}
+
+	if (trajectory_data.c_front == true)
+		trajectory_data.max_acceleration = -1.5;
+	else {
+		int num_accels = accels.size();
+		trajectory_data.max_acceleration = 0;
+		for (int i = 0; i < num_accels; i++) {
+			if (abs(accels[i]) > trajectory_data.max_acceleration) 
+				trajectory_data.max_acceleration = abs(accels[i]);
+		}
 	}
 	return trajectory_data;
 }
 
-map<int, vector<vector<double>>> Cost::filter_predictions_by_lane(map<int, vector <vector<double>>> predictions, 
+map<int, vector<Prediction>> Cost::filter_predictions_by_lane(map<int, vector<Prediction>> predictions, 
 	int lane) {
   
-	map<int, vector<vector<double>>> filtered;
+	map<int, vector<Prediction>> filtered;
 
 	for (auto val: predictions) {
-		if (val.second[0][0] == lane && val.first != -1) {
+		if (val.second[0].lane == lane) {
 			filtered[val.first] = val.second;
 		}
 	}
@@ -119,21 +183,21 @@ bool Cost::check_collision(Snapshot snapshot,
 	return false;
 }
 
-double Cost::inefficiency_cost(Vehicle vehicle, 
+double Cost::inefficiency_cost(Vehicle ego, 
 	TrajectoryData data) {
 
-	double pct = (vehicle.max_speed - data.avg_speed) / vehicle.max_speed;
+	double pct = (ego.max_speed - data.avg_speed) / ego.max_speed;
 	double multiplier = pct * pct;
   
 	return multiplier * EFFICIENCY;
 }
 
-double Cost::collision_cost(Vehicle vehicle,
+double Cost::collision_cost(Vehicle ego,
 	TrajectoryData data) {
-
-	if (data.collides) {
-		double exponent = data.collides_at * data.collides_at;
-		double multiplier = exp(-exponent);
+		
+	if (data.c_front) {
+		double buffer = ego.s - data.c_front_at;
+		double multiplier = exp(buffer);
 		
 		return multiplier * COLLISION;
 	}
@@ -141,18 +205,43 @@ double Cost::collision_cost(Vehicle vehicle,
 	return 0;
 }
 
-double Cost::buffer_cost(Vehicle vehicle,
+double Cost::buffer_cost(Vehicle ego,
 	TrajectoryData data) {
 
-	double closest = data.closest_approach;
-	if (closest == 0) 
+	int _DESIRED_BUFFER = ego.v + 30;
+	if (!data.c_front)
+		return 0;
+	
+	double buffer = data.c_front_at - ego.s;
+
+	cout << " f_buffer:" << buffer << " ";
+	if (buffer == _DESIRED_BUFFER) 
 		return 10 * DANGER;
 
-	double timesteps_away = closest / data.avg_speed;
-	if (timesteps_away > DESIRED_BUFFER) 
+	if (buffer > _DESIRED_BUFFER) 
 		return 0;
 
-	double multiplier = 1 - pow((timesteps_away / DESIRED_BUFFER), 2);
+	double multiplier = 1 - pow((buffer / _DESIRED_BUFFER), 2);
+
+	return multiplier * DANGER;
+}
+
+double Cost::change_lane_cost(Vehicle ego,
+	TrajectoryData data) {
+
+	int _DESIRED_BUFFER = ego.v + 5;
+		
+	if (!data.c_back)
+		return 0;
+	
+	double buffer = ego.s - data.c_back_at;
+
+	cout << " b_buffer:" << buffer << " ";
+
+	if (buffer > _DESIRED_BUFFER) 
+		return 0;
+
+	double multiplier = 1 - pow((buffer / _DESIRED_BUFFER), 2);
 
 	return multiplier * DANGER;
 }

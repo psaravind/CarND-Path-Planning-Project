@@ -1,4 +1,5 @@
 #include "road.h"
+#include <iostream>
 #include <math.h>
 #include <vector>
 #include <map>
@@ -7,19 +8,22 @@
 #include "vehicle.h"
 #include "helper.h"
 
-Road::Road(int _num_lanes, 
-	int lane_num, 
-	double s, 
+Road::Road(int num_lanes, 
+	int start_lane, 
+	double s,
+	double v,
+	double a,
 	double max_speed,
-	int num_lanes,
-	double max_accel,
-	double min_car_distance) : ego(lane_num, s, 3, .25) {
-	num_lanes = _num_lanes;
-
-	ego.configure(max_speed, num_lanes, max_accel, min_car_distance);
-
-	ego.state = "KL";
-}
+	double max_acceleration,
+	double min_car_distance):ego(start_lane, 
+		s, 
+		v, 
+		a, 
+		max_speed, 
+		num_lanes, 
+		max_acceleration, 
+		min_car_distance, 
+		"KL"){}
 
 Road::~Road() {}
 
@@ -39,28 +43,36 @@ void Road::populate_traffic(vector<vector<double>> sensor_fusion) {
 
 		double sensor_speed = sqrt(sensor_vx * sensor_vx + sensor_vy * sensor_vy);
 
-		Vehicle vehicle = Vehicle(sensor_lane, sensor_s, sensor_speed);
-		vehicle.state = "KL";
+		Vehicle vehicle = Vehicle(sensor_lane, sensor_s, sensor_speed, "KL");
 		vehicles.insert(std::pair<int, Vehicle>(sensor_id, vehicle));
 	} 
 }
 
-void Road::advance(double car_s) {
-	map<int, vector<vector<double>>> predictions;
+void Road::advance(double car_s,
+	double car_speed) {
+	
+	map<int, vector<Prediction>> vehicle_predictions;
+	vector<Prediction> ego_predictions;
+	
 	ego.s = car_s;
-	predictions[-1] = ego.generate_predictions(50);
+	ego.v = car_speed;
+	
+	cout << "before lane:" << ego.lane << " a:" << ego.a << " v:" << ego.v << endl;
+	
+	ego_predictions = ego.generate_predictions(50);
 
 	for (auto val : vehicles)
-		predictions[val.first] = val.second.generate_predictions(50);
+		vehicle_predictions[val.first] = val.second.generate_predictions(50);
 
-	ego.update_state(predictions);
-	ego.realize_state(predictions);
-	cout << " before a:" << ego.a << " v:" << ego.v;
-	ego.ego_increment(1);
-	cout << " after a:" << ego.a << " v:" << ego.v << endl << endl;
+	ego.update_state(ego_predictions, vehicle_predictions);
+	ego.realize_state(ego_predictions, vehicle_predictions);
+
+	ego.advance(1);
+	cout << "after lane:" << ego.lane << " a:" << ego.a << " v:" << ego.v << endl << endl;
 }
 
 int Road::getLane(double d) {
+
 	if (d >= 0 && d < LANE_WIDTH) 
 		return 0;
 	if (d >= LANE_WIDTH && d < LANE_WIDTH * 2) 
