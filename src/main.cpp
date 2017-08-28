@@ -61,13 +61,11 @@ int main(int argc, char* argv[]) {
 	double max_s = 6945.554;
 	bool debug = false;
 	double max_speed = 49.75;
-	double increment_velocity = .4; //.224;
-	double decrement_velocity = .35; //.224;
 	double min_car_distance = 120.0;
 	int num_lanes = 3;
 	int start_lane = 1;
 	double s;
-	double v = 3;
+	double v = 5;
 	double a = 1.5;
 	double max_acceleration = 1.5;
 
@@ -79,12 +77,9 @@ int main(int argc, char* argv[]) {
 		max_speed = atof(getCmdOption(argv, argv + argc, "-s"));
 	}
 
-	if (cmdOptionExists(argv, argv + argc, "-iv")) {
-		increment_velocity = atof(getCmdOption(argv, argv + argc, "-iv"));
-	}
-
-	if (cmdOptionExists(argv, argv + argc, "-dv")) {
-		decrement_velocity = atof(getCmdOption(argv, argv + argc, "-dv"));
+	if (cmdOptionExists(argv, argv + argc, "-a")) {
+		a = atof(getCmdOption(argv, argv + argc, "-a"));
+		max_acceleration = a;
 	}
 
 	if (cmdOptionExists(argv, argv + argc, "-m")) {

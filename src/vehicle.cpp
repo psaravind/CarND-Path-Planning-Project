@@ -63,7 +63,7 @@ Prediction Vehicle::state_at(int t) {
 
 	Prediction prediction;
 	
-	double dt = double(t);// * 0.02;
+	double dt = double(t);
 	prediction.lane = lane;
 	prediction.s = s + v * dt + a * dt * dt / 2;
 	prediction.v = max(0.0, v + a * dt);
@@ -93,9 +93,9 @@ void Vehicle::update_state(vector<Prediction> ego_predictions,
 		next_states = {"KL", "PLCR", "LCR"};
 
 	if (state.compare("LCR") == 0)
-		next_states = {"KL"};
+		next_states = {"KL", "PLCR"};
 	if (state.compare("LCL") == 0)
-		next_states = {"KL"};
+		next_states = {"KL", "PLCL"};
 
 	map<string, double> new_costs;
 	for (auto _state : next_states) {
@@ -136,6 +136,23 @@ void Vehicle::update_state(vector<Prediction> ego_predictions,
 			cout << " fabs2:" << f << " ";
 		}
 	}
+	
+	
+	if ((new_costs.count("LCL") > 0) && (new_costs.count("PLCL") > 0)) {
+		double f = fabs(new_costs["LCL"] - new_costs["PLCL"]);
+		if (f < std::numeric_limits<double>::epsilon()) {
+			state = "LCL";
+			cout << " fabs1:" << f << " ";
+		}
+	}
+
+	if ((new_costs.count("LCR") > 0) && (new_costs.count("PLCR") > 0)) {
+		double f = fabs(new_costs["LCR"] - new_costs["PLCR"]);
+		if (f < std::numeric_limits<double>::epsilon()) {
+			state = "LCR";
+			cout << " fabs4:" << f << " ";
+		}
+	}
 
 	cout << "min state:" << state << " value:" << min << " s:" << s << endl;
 }
@@ -152,8 +169,6 @@ vector<Snapshot> Vehicle::trajectories_for_state(string _state,
 	trajectories.push_back(snapshot);
 
 	for (int i = 0; i < horizon; i++) {
-		realize_state(ego_predictions, 
-			vehicle_predictions);
 		advance(1);
 
 		trajectories.push_back(Snapshot(lane, s, v, a, state));
@@ -267,7 +282,7 @@ double Vehicle::_max_accel_for_lane(int _lane,
 		Prediction first_Prediction = prediction[0];
 		
 		if (first_Prediction.lane == _lane && first_Prediction.s > s) {
-			in_front.push_back(prediction[0]);
+			in_front.push_back(first_Prediction);
 		}
 	}
   
@@ -280,11 +295,12 @@ double Vehicle::_max_accel_for_lane(int _lane,
 		}
 
 		double available_room = (min_s - s );
+		//cout << " room:" << available_room << " " << " min_s:" << min_s << " ";		
 		if (available_room < preferred_buffer) {
-			max_acc = -1.5;
+			max_acc = -max_acceleration;
 			return max_acc;
-	}
-		//cout << " room:" << available_room << " ";
+		}
+
 		max_acc = min(max_acc, available_room/preferred_buffer);
 	}
 

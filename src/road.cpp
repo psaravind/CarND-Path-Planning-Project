@@ -58,7 +58,7 @@ void Road::advance(double car_s,
 	ego.v = car_speed;
 	
 	cout << "before lane:" << ego.lane << " a:" << ego.a << " v:" << ego.v << endl;
-	
+
 	ego_predictions = ego.generate_predictions(50);
 
 	for (auto val : vehicles)
