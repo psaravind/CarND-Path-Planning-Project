@@ -224,16 +224,47 @@ Rest of the path points are calculated and then the coordinates are rotated and 
 }
 ```
 
-#### 3.3 Driver module
+#### 3.3 Populating vehicles and advancing self driving car in 'road' class
 
-#### 3.4 Populating vehicles in road.cpp
+Road class simulates a road on the highway, storing the self driving car details along with the car details from the sensor fusion data.  Road class updates the self driving car's parameters, generates predictions, updates state, realizes the state based on predicitons and advances the car.
 
-#### 3.5 Generating predictions
+```c++
+void Road::advance(double car_s,
+	double car_speed) {
+	
+	map<int, vector<Prediction>> vehicle_predictions;
+	vector<Prediction> ego_predictions;
+	
+	ego.s = car_s;
+	ego.v = car_speed;
 
-#### 3.6 State management in vehicle.cpp
+	ego_predictions = ego.generate_predictions(50);
 
-#### 3.7 Cost Calculations in cost.cpp
+	for (auto val : vehicles)
+		vehicle_predictions[val.first] = val.second.generate_predictions(50);
 
-#### 3.8 Generating Paths
+	ego.update_state(ego_predictions, vehicle_predictions);
+	ego.realize_state(ego_predictions, vehicle_predictions);
+
+	ego.advance(1);
+}
+```
+
+#### 3.4 State management in vehicle class
+
+Vehicle class implements the state transition explained in the class with following states:
+1. 'CS': constant speed, used by sensor fusion cars
+2. 'KL': Keep Lane, cruise along current lane
+3. 'PLCL': prepare for lane change left
+4. 'PLCR': prepare for lane change right
+5. 'LCL': lane change to left
+6. "LCR': lane change to right
+
+Following diagram shows the finite state machine implemented the vehicle class.
+https://github.com/psaravind/CarND-Path-Planning-Project/tree/master/image/fsm.jpg
+
+![FSM](https://github.com/psaravind/CarND-Path-Planning-Project/tree/master/image/fsm.jpg "Self Driving Car FSM")
+
+#### 3.7 Cost Calculations in cost class
 
 ### Improvement and next steps
