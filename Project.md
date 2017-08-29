@@ -99,20 +99,144 @@ main.cpp is the main driver for the project, this file was changed to call other
 
 After this step, main module listens on the websocket for message events.  This websocket message provides both message and event, the json message provides data about the self driving car, previous path details and end path details.  These values are passed to the path planner 'GeneratePath()' method to get the path that the self driving car needs to follow.
 
-Folowing 
-
-```C++
-	double max_speed = 49.75;             // maximum speed for self driving car
-	double min_car_distance = 120.0;
-	int num_lanes = 3;
-	int start_lane = 1;
-	double s;
-	double v = 5;
-	double a = 1.6;
-	double max_acceleration = 1.6;
-  ```
-
 #### 3.2 Path Planning
+
+Path planning class is called in the main class with way points data along with default values for the road and self driving car.  Main logic for the self driving car is executed by the GeneratePath() method, this method takes in following parameters:
+1. Self driving car's localization data, car's x, y, s, d, yaw and speed
+2. Previous path data given to the simulator, this provides the path that has been processed since last time.
+3. Sensor Fusion Data, a list of all other car's attributes on the same side of the road.
+
+Using these parameters, is uses the road, vehicle and cost classes to get **reference velocity** and **lane** the self driving car need to follow on the road.  These parameters as used to generate path for the self driving car to follow.  The code for generating the path is based on the walk-through provided by Aaron Brown and David Silver in the [path planning overview](https://www.youtube.com/watch?v=7sI3VHFPP0w).
+
+Following details the path generation logic in path planning module.
+
+```c++
+car_x = car_data[0];
+	car_y = car_data[1];
+	car_s = car_data[2];
+	car_d = car_data[3];
+	car_yaw = car_data[4];
+	car_speed = car_data[5];
+
+	sensor_fusion = _sensor_fusion;
+	previous_path_x = path_data[0];
+	previous_path_y = path_data[1];
+	prev_size = previous_path_x.size();
+	end_path_sd = _end_path_sd;
+
+	if (prev_size > 0) 
+		car_s = end_path_sd[0];
+
+	road.populate_traffic(sensor_fusion);
+	road.advance(car_s,
+		car_speed);
+
+	car_ref_vel = road.ego.v;
+	car_lane = road.ego.lane;
+
+	vector<double> ptsx;
+	vector<double> ptsy;
+
+	double ref_x = car_x;
+	double ref_y = car_y;
+	double ref_yaw = deg2rad(car_yaw);
+
+	if (prev_size < 2) {
+		double prev_car_x = car_x - cos(car_yaw);
+		double prev_car_y = car_y - sin(car_yaw);
+
+		ptsx.push_back(prev_car_x);
+		ptsx.push_back(car_x);
+
+		ptsy.push_back(prev_car_y);
+		ptsy.push_back(car_y);
+	} else {
+		ref_x = previous_path_x[prev_size - 1];
+		ref_y = previous_path_y[prev_size - 1];
+
+		double ref_x_prev = previous_path_x[prev_size - 2];
+		double ref_y_prev = previous_path_y[prev_size - 2];
+		ref_yaw = atan2(ref_y - ref_y_prev, ref_x - ref_x_prev);
+
+		ptsx.push_back(ref_x_prev);
+		ptsx.push_back(ref_x);
+		ptsy.push_back(ref_y_prev);
+		ptsy.push_back(ref_y);
+	}
+
+	vector<double> next_wp0 = getXY(car_s + 30, 
+		(2 + 4 * car_lane), 
+		map_waypoints_s, 
+		map_waypoints_x, 
+		map_waypoints_y);
+	vector<double> next_wp1 = getXY(car_s + 60, 
+		(2 + 4 * car_lane), 
+		map_waypoints_s, 
+		map_waypoints_x, 
+		map_waypoints_y);
+	vector<double> next_wp2 = getXY(car_s + 90, 
+		(2 + 4 * car_lane), 
+		map_waypoints_s, 
+		map_waypoints_x, 
+		map_waypoints_y);
+
+	ptsx.push_back(next_wp0[0]);
+	ptsx.push_back(next_wp1[0]);
+	ptsx.push_back(next_wp2[0]);
+
+	ptsy.push_back(next_wp0[1]);
+	ptsy.push_back(next_wp1[1]);
+	ptsy.push_back(next_wp2[1]);
+
+	for (int i = 0; i < ptsx.size(); i++) {
+		double shift_x = ptsx[i] - ref_x;
+		double shift_y = ptsy[i] - ref_y;
+
+		ptsx[i] = (shift_x * cos(0 - ref_yaw) - shift_y * sin(0 - ref_yaw));
+		ptsy[i] = (shift_x * sin(0 - ref_yaw) + shift_y * cos(0 - ref_yaw));
+	}
+
+	tk::spline s;
+			
+	s.set_points(ptsx, ptsy);
+
+	vector<double> next_x_vals;
+	vector<double> next_y_vals;
+	
+	for (int i = 0; i < previous_path_x.size(); i++) {
+		next_x_vals.push_back(previous_path_x[i]);
+		next_y_vals.push_back(previous_path_y[i]);
+	}
+
+	double target_x = 30.0;
+	double target_y = s(target_x);
+	double target_dist = sqrt((target_x * target_x) + (target_y * target_y));
+
+	double x_add_on = 0;  
+	
+	for (int i = 1; i <= 50 - previous_path_x.size(); i++) {
+		double N = (target_dist / (.02 * car_ref_vel / 2.24));
+		double x_point = x_add_on + target_x / N;
+		double y_point = s(x_point);
+
+		x_add_on = x_point;
+
+		double x_ref = x_point;
+		double y_ref = y_point;
+
+		x_point = (x_ref * cos(ref_yaw) - y_ref * sin(ref_yaw));
+		y_point = (x_ref * sin(ref_yaw) + y_ref * cos(ref_yaw));
+
+		x_point += ref_x;
+		y_point += ref_y;
+
+		next_x_vals.push_back(x_point);
+		next_y_vals.push_back(y_point);
+	}
+
+	return {next_x_vals, next_y_vals};
+}
+```
 
 #### 3.3 Driver module
 
