@@ -36,7 +36,8 @@ Third party libraries
 
 #### 1.2 Build Instructions
 
-Compile: ```shell 
+Compile: 
+```shell 
 $cmake .. && make
 ```
 
@@ -44,7 +45,8 @@ $cmake .. && make
 
 Run the Term3 simulator and run the compiled path planning module.
 
-Run it:```shell
+Run it:
+```shell
 $./path_planning
 ```
 
