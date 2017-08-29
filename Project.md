@@ -261,8 +261,51 @@ Vehicle class implements the state transition explained in the class with follow
 6. "LCR': lane change to right
 
 Following diagram shows the finite state machine implemented in the vehicle class.
-![FSM](https://github.com/psaravind/CarND-Path-Planning-Project/tree/master/image/fsm.jpg)
 ![FSM](/image/fsm.jpg)
+
+Following code implements the above state transition diagram
+
+```c++
+	if (state.compare("KL") == 0) {
+		if (lane == 0)
+			next_states = {"KL", "PLCR"};
+		else if (lane == num_lanes - 1)
+			next_states = {"KL", "PLCL"};
+		else
+			next_states = {"KL", "PLCL", "PLCR"};
+	}
+
+	if (state.compare("PLCL") == 0)
+		next_states = {"KL", "PLCL", "LCL"};
+
+	if (state.compare("PLCR") == 0)
+		next_states = {"KL", "PLCR", "LCR"};
+
+	if (state.compare("LCR") == 0)
+		next_states = {"KL", "PLCR"};
+	if (state.compare("LCL") == 0)
+		next_states = {"KL", "PLCL"};
+```
+
+Vehicle class implements _max_accel_for lane() and realize_prep_lan_change() methods that provides the stability of the vehicle.  Maximum acceleration for the lane throttles the acceleration based on vehicle speed, also the preffered buffer to vehicle in front is also calculated on vehicles speed.  The two dynamic parameters atains the primary goal for the project, stable vehicle acceleration and jerk.
+
 #### 3.7 Cost Calculations in cost class
+
+```c++
+	TrajectoryData trajectory_data = get_helper_data(ego,
+		ego_predictions, 
+		state,
+		num_lanes,
+		trajectories, 
+		vehicle_predictions);
+		
+	double cost = 0.0;
+	
+	cost += inefficiency_cost(ego, trajectory_data);
+	cost += collision_cost(ego, trajectory_data);
+	cost += buffer_cost(ego, trajectory_data);
+	if (state.compare("KL") != 0)
+		cost += change_lane_cost(ego, trajectory_data);
+```
 
 ### Improvement and next steps
