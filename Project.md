@@ -1,7 +1,7 @@
 
 # Path Planning Project
 
-This project meets following goals as specified in the Github Readme file.
+This project meets following goals as specified in the [Github Readme file](https://github.com/udacity/CarND-Path-Planning-Project).
 
 1. Safely navigate around a virtual highway with other traffic that is driving +-10 MPH of the 50 MPH speed limit. 
 2. The car should try to go as close as possible to the 50 MPH speed limit, which means passing slower traffic when possible, other cars will try to change lanes as well.
@@ -11,18 +11,39 @@ This project meets following goals as specified in the Github Readme file.
 6. Car should not experience total acceleration over 10 m/s^2 and jerk that is greater than 50 m/s^3.
 
 ## Data and tools provided for the project.
-1.  Car's localization and sensor fusion data.
-2.  Sparse map list of waypoints around the highway.
-3.  Term3 Simulator that provides self driving car's localization data, previous path data and previous path's end s and d values.
+1. Car's localization and sensor fusion data.
+2. Sparse map list of waypoints around the highway.
+3. Term3 Simulator that provides self driving car's localization data, previous path data and previous path's end s and d values.
 
 ### Path Planning Rubric
 
 #### 1. Compilation
 
-##### 1.1 The code compiles correctly
-Code must compile without errors with cmake and make.
+##### 1.1 Code compiles correctly
+CMakeLists.txt file has been modified to include following files along with the 'main.cpp'
+1. road.cpp 
+2. cost.cpp 
+3. vehicle.cpp 
+4. snapshot.cpp 
+5. pathplanner.cpp 
+6. helper.cpp
 
-Given that we've made CMakeLists.txt as general as possible, it's recommend that you do not change it unless you can guarantee that your changes will still compile on any platform.
+Third party libraries
+1. Eigen-3.3 - Eigen C++ template library for linear algebra
+2. spline.h - Cubic Spline interpolation in C++
+3. json.hpp - 
+
+##### 1.2 Build Instructions
+
+Compile: $cmake .. && make
+
+##### 1.3 Running Path Planning module
+
+Run the Term3 simulator and run the compiled path planning module.
+
+Run it:$./path_planning.
+
+Path planning module lisents on port 4567 to communicate with the simulator. 
 
 #### 2. Valid Trajectories
 
