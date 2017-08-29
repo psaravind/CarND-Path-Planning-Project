@@ -57,21 +57,14 @@ int main(int argc, char* argv[]) {
 		map_file_ = "../data/highway_map_bosch1.csv";
 	}
 
-	// The max s value before wrapping around the track back to 0
-	double max_s = 6945.554;
-	bool debug = false;
 	double max_speed = 49.75;
 	double min_car_distance = 120.0;
 	int num_lanes = 3;
 	int start_lane = 1;
 	double s;
 	double v = 5;
-	double a = 1.7;
-	double max_acceleration = 1.7;
-
-	if (cmdOptionExists(argv, argv + argc, "-d")) {
-		debug = true;
-	}
+	double a = 1.6;
+	double max_acceleration = 1.6;
 
 	if (cmdOptionExists(argv, argv + argc, "-s")) {
 		max_speed = atof(getCmdOption(argv, argv + argc, "-s"));
