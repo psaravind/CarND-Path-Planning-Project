@@ -1,7 +1,8 @@
 
 # Path Planning Project
 
-This project meets following goals as specified in the [Github Readme file](https://github.com/udacity/CarND-Path-Planning-Project).
+## Goals for the project
+This project meets following goals as specified in the [Path Planning Project Github Readme file](https://github.com/udacity/CarND-Path-Planning-Project).
 
 1. Safely navigate around a virtual highway with other traffic that is driving +-10 MPH of the 50 MPH speed limit. 
 2. The car should try to go as close as possible to the 50 MPH speed limit, which means passing slower traffic when possible, other cars will try to change lanes as well.
@@ -15,11 +16,11 @@ This project meets following goals as specified in the [Github Readme file](http
 2. Sparse map list of waypoints around the highway.
 3. Term3 Simulator that provides self driving car's localization data, previous path data and previous path's end s and d values.
 
-### Path Planning Rubric
+## Path Planning Rubric
 
-#### 1. Compilation
+### 1. Compilation
 
-##### 1.1 Code compiles correctly
+#### 1.1 Code compiles correctly
 CMakeLists.txt file has been modified to include following files along with the 'main.cpp'
 1. road.cpp 
 2. cost.cpp 
@@ -31,13 +32,13 @@ CMakeLists.txt file has been modified to include following files along with the 
 Third party libraries
 1. Eigen-3.3 - Eigen C++ template library for linear algebra
 2. spline.h - Cubic Spline interpolation in C++
-3. json.hpp - 
+3. json.hpp - JSON for modern C++
 
-##### 1.2 Build Instructions
+#### 1.2 Build Instructions
 
 Compile: $cmake .. && make
 
-##### 1.3 Running Path Planning module
+#### 1.3 Running Path Planning module
 
 Run the Term3 simulator and run the compiled path planning module.
 
@@ -45,28 +46,36 @@ Run it:$./path_planning.
 
 Path planning module lisents on port 4567 to communicate with the simulator. 
 
-#### 2. Valid Trajectories
+### 2. Valid Trajectories
 
-##### 2.1 The car is able to drive at least 4.32 miles without incident
-	
-The top right screen of the simulator shows the current/best miles driven without incident. Incidents include exceeding acceleration/jerk/speed, collision, and driving outside of the lanes. Each incident case is also listed below in more detail.
+#### 2.1 The car is able to drive at least 4.32 miles without incident
 
-##### 2.2 The car drives according to the speed limit
-The car doesn't drive faster than the speed limit. Also the car isn't driving much slower than speed limit unless obstructed by traffic.
+The self driving car is able to drive several laps around the track without any incident, I let it run for 3 laps without incident, self driving car is very conservative and does not cut other cars to change lanes.  During the 3 laps, current and best miles were the same, there were no acceleration, jerk, speed, collision or driving outside the lanes.  I did not see any incident listed on the simulator.
 
-##### 2.3 Max Acceleration and Jerk are not Exceeded
-The car does not exceed a total acceleration of 10 m/s^2 and a jerk of 10 m/s^3
+#### 2.2 The car drives according to the speed limit
 
-##### 2.4 Car does not have collisions
-The car must not come into contact with any of the other cars on the road
+Maximum speed limit that the self driving car could reach is 49.75mph, this value was chosen to keep the car below the speed limit.  Car was travelling 60% of the time around this maximum speed limit, during other them it was below the speed limit due to obstructed and congested traffic.  
 
-##### 2.5 The car stays in its lane, except for the time between changing lanes
-The car doesn't spend more than a 3 second length out side the lane lanes during changing lanes, and every other time the car stays inside one of the 3 lanes on the right hand side of the road.
+#### 2.3 Max Acceleration and Jerk are not Exceeded
 
-##### 2.6 The car is able to change lanes
-The car is able to smoothly change lanes when it makes sense to do so, such as when behind a slower moving car and an adjacent lane is clear of other traffic.
+The self driving car never exceeded the total acceleration of 10 m/s^2 and a jerk of 10 m/s^3 during the 3 laps, this was achieved due to various optimization(described below in reflection) techniques employed to tune the acceleration parameters.
+
+#### 2.4 Car does not have collisions
+
+Self driving car maintains conservative driving and avoids collision at all costs.  It maintains enough driving distance with car in front and while change lanes by providing enough distance between cars in front and back.  Several optimization(described below in reflection) techniques were employed to avoid collisions.
+
+#### 2.5 The car stays in its lane, except for the time between changing lanes
+
+The self driving car stays in the lane by sticking to the center of the lane.  When the time comes to change lanes, transistion is done very smoothly with constant acceleration and reaches the target lane without coliding with other cars.  Car does not spend more 3 second length outside the lane during changing lanes.
+
+#### 2.6 The car is able to change lanes
+
+Self driving car smoothly changes lane when its behind a slower car, this lane change happens when the adjacent lane is clear and its safe to make the lane change without colliding with other cars.
 
 #### 3. Reflection
 
+Following are some of the methods and tuning steps I employed in the Path Planning project.
+
 ##### 3.1 There is a reflection on how to generate paths
+
 The code model for generating paths is described in detail. This can be part of the README or a separate doc labeled "Model Documentation".
