@@ -260,11 +260,9 @@ Vehicle class implements the state transition explained in the class with follow
 5. 'LCL': lane change to left
 6. "LCR': lane change to right
 
-Following diagram shows the finite state machine implemented the vehicle class.
-https://github.com/psaravind/CarND-Path-Planning-Project/tree/master/image/fsm.jpg
-
-![FSM](https://github.com/psaravind/CarND-Path-Planning-Project/tree/master/image/fsm.jpg "Self Driving Car FSM")
-
+Following diagram shows the finite state machine implemented in the vehicle class.
+![FSM](https://github.com/psaravind/CarND-Path-Planning-Project/tree/master/image/fsm.jpg)
+![FSM](/image/fsm.jpg)
 #### 3.7 Cost Calculations in cost class
 
 ### Improvement and next steps
