@@ -74,11 +74,24 @@ Self driving car smoothly changes lane when its behind a slower car, this lane c
 
 #### 3. Reflection
 
-Following are some of the methods and tuning steps I employed in the Path Planning project.  The project is based out of the Python solutions provided for Lesson 4: Behavior Planning module, Python code was converted to C++ classes and significant changes were made to achieve the goals for the project.  
+Following are some of the methods and tuning steps I employed in the Path Planning project.  Project is based on code walkthru video and the python solutions provided for Lesson 4: Behavior Planning module, python code was converted to C++ classes and significant changes were made to achieve the goals for the project.  
 
 #### 3.1 Driver module
 
-The code model for generating paths is described in detail. This can be part of the README or a separate doc labeled "Model Documentation".
+main.cpp is the main driver for the project, this file was changed to call other classes to handle path planning, road, vehicle and cost functions.  This file has hard coded default values which could be changed in command line options.  Way points file './data/highway_map.csv' is read and stored as vectors or double.  These values along with default values are passed to the path planner constructor.  After this step, main module listens on the websocket for message events.
+
+This websocket message provides both message and event, the json message provides data about the self driving car, previous path details and end path details.  These values are passed to the path planner 'GeneratePath()' method to get the path that the self driving car needs to follow.
+
+```C++
+	double max_speed = 49.75;
+	double min_car_distance = 120.0;
+	int num_lanes = 3;
+	int start_lane = 1;
+	double s;
+	double v = 5;
+	double a = 1.6;
+	double max_acceleration = 1.6;
+  ```
 
 #### 3.2 Path Planning
 
