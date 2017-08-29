@@ -108,39 +108,10 @@ Path planning class is called in the main class with way points data along with 
 
 Using these parameters, is uses the road, vehicle and cost classes to get **reference velocity** and **lane** the self driving car need to follow on the road.  These parameters as used to generate path for the self driving car to follow.  The code for generating the path is based on the walk-through provided by Aaron Brown and David Silver in the [path planning overview](https://www.youtube.com/watch?v=7sI3VHFPP0w).
 
-Following details the path generation logic in path planning module.
+The new path for the self driving car starts by using 2 points from previous path data from the simulator.  Using this data, previous position of the car is calculated, these points describe a path tangent to the car or to the previous path's end point which is used to generate new path.  
+
 
 ```c++
-car_x = car_data[0];
-	car_y = car_data[1];
-	car_s = car_data[2];
-	car_d = car_data[3];
-	car_yaw = car_data[4];
-	car_speed = car_data[5];
-
-	sensor_fusion = _sensor_fusion;
-	previous_path_x = path_data[0];
-	previous_path_y = path_data[1];
-	prev_size = previous_path_x.size();
-	end_path_sd = _end_path_sd;
-
-	if (prev_size > 0) 
-		car_s = end_path_sd[0];
-
-	road.populate_traffic(sensor_fusion);
-	road.advance(car_s,
-		car_speed);
-
-	car_ref_vel = road.ego.v;
-	car_lane = road.ego.lane;
-
-	vector<double> ptsx;
-	vector<double> ptsy;
-
-	double ref_x = car_x;
-	double ref_y = car_y;
-	double ref_yaw = deg2rad(car_yaw);
-
 	if (prev_size < 2) {
 		double prev_car_x = car_x - cos(car_yaw);
 		double prev_car_y = car_y - sin(car_yaw);
@@ -163,7 +134,11 @@ car_x = car_data[0];
 		ptsy.push_back(ref_y_prev);
 		ptsy.push_back(ref_y);
 	}
+```
 
+3 (x, y) coordinates for 30, 60 and 90 meters ahead in the target lane are calculated using the map's waypoints.   Using these 5 (x, y) points provides a path that the self driving car needs to follow at that very movement.  
+
+```c++
 	vector<double> next_wp0 = getXY(car_s + 30, 
 		(2 + 4 * car_lane), 
 		map_waypoints_s, 
@@ -187,7 +162,10 @@ car_x = car_data[0];
 	ptsy.push_back(next_wp0[1]);
 	ptsy.push_back(next_wp1[1]);
 	ptsy.push_back(next_wp2[1]);
+```
 
+These points are rotated to self driving car's local coordinate system.  
+```c++
 	for (int i = 0; i < ptsx.size(); i++) {
 		double shift_x = ptsx[i] - ref_x;
 		double shift_y = ptsy[i] - ref_y;
@@ -195,7 +173,11 @@ car_x = car_data[0];
 		ptsx[i] = (shift_x * cos(0 - ref_yaw) - shift_y * sin(0 - ref_yaw));
 		ptsy[i] = (shift_x * sin(0 - ref_yaw) + shift_y * cos(0 - ref_yaw));
 	}
+```
 
+In order to product smooth spacing of points without excessive acceleration and jerk, target distance of 30 meters is used to generate a spline spacing along the x values. 
+
+```c++
 	tk::spline s;
 			
 	s.set_points(ptsx, ptsy);
@@ -213,7 +195,11 @@ car_x = car_data[0];
 	double target_dist = sqrt((target_x * target_x) + (target_y * target_y));
 
 	double x_add_on = 0;  
-	
+```
+
+Rest of the path points are calculated and then the coordinates are rotated and transformed to global coordinates.  These values are pushed into path vector which are returned to simulator.
+
+```c++
 	for (int i = 1; i <= 50 - previous_path_x.size(); i++) {
 		double N = (target_dist / (.02 * car_ref_vel / 2.24));
 		double x_point = x_add_on + target_x / N;
