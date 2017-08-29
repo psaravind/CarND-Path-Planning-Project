@@ -26,8 +26,6 @@ class Vehicle {
 		string state;
 	};
 
-	int preferred_buffer = 38;
-
 	int lane;
 	int num_lanes;
 

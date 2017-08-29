@@ -66,8 +66,8 @@ int main(int argc, char* argv[]) {
 	int start_lane = 1;
 	double s;
 	double v = 5;
-	double a = 1.5;
-	double max_acceleration = 1.5;
+	double a = 1.7;
+	double max_acceleration = 1.7;
 
 	if (cmdOptionExists(argv, argv + argc, "-d")) {
 		debug = true;

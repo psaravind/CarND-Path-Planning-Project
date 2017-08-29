@@ -22,39 +22,15 @@ double Cost::calculate_cost(const Vehicle &ego,
 		num_lanes,
 		trajectories, 
 		vehicle_predictions);
-
-	cout << " proposed_lane:" << trajectory_data.proposed_lane << 
-		" avg_speed:" << trajectory_data.avg_speed <<
-		" max_acceleration:" << trajectory_data.max_acceleration <<
-		" c_f:" << trajectory_data.c_front << 
-		" c_f_at:" << trajectory_data.c_front_at <<
-		" c_b:" << trajectory_data.c_back << 
-		" c_b_at:" << trajectory_data.c_back_at;
 		
 	double cost = 0.0;
-	double c;
 	
-	c = inefficiency_cost(ego, trajectory_data);
-	if (c != 0)
-		cout << " c1:" << c;
-	cost += c;
-	c = collision_cost(ego, trajectory_data);
-	if (c != 0)
-		cout << " c2:" << c;
-	cost += c;
-	c = buffer_cost(ego, trajectory_data);
-	if (c != 0)
-		cout << " c3:" << c;
-	cost += c;
-	if (state.compare("KL") != 0) {
-		c = change_lane_cost(ego, trajectory_data);
-		if (c != 0)
-			cout << " c4:" << c;
-		cost += c;
-	}
+	cost += inefficiency_cost(ego, trajectory_data);
+	cost += collision_cost(ego, trajectory_data);
+	cost += buffer_cost(ego, trajectory_data);
+	if (state.compare("KL") != 0)
+		cost += change_lane_cost(ego, trajectory_data);
 
-	cout << " " << endl;
-	
 	return cost;
 }
 
@@ -168,7 +144,7 @@ map<int, vector<Prediction>> Cost::filter_predictions_by_lane(map<int, vector<Pr
 bool Cost::check_collision(Snapshot snapshot, 
 	double s_previous, 
 	double s_now) {
-	
+
 	double v_target = s_now - s_previous;
 
 	if (s_previous < snapshot.s) 
@@ -176,7 +152,7 @@ bool Cost::check_collision(Snapshot snapshot,
   
 	if (s_previous > snapshot.s) 
 		return (s_now <= snapshot.s);
-	
+
 	if (s_previous == snapshot.s) 
 		return (v_target <= snapshot.v);
 
@@ -194,11 +170,11 @@ double Cost::inefficiency_cost(Vehicle ego,
 
 double Cost::collision_cost(Vehicle ego,
 	TrajectoryData data) {
-		
+
 	if (data.c_front) {
 		double buffer = ego.s - data.c_front_at;
 		double multiplier = exp(buffer);
-		
+
 		return multiplier * COLLISION;
 	}
 
@@ -208,13 +184,17 @@ double Cost::collision_cost(Vehicle ego,
 double Cost::buffer_cost(Vehicle ego,
 	TrajectoryData data) {
 
-	int _DESIRED_BUFFER = ego.v + 30;
+	tk::spline buffer_spline;
+	vector<double> buffer_x = {0, 22.5, 50};
+	vector<double> buffer_y = {10, 23, 36};
+	buffer_spline.set_points(buffer_x, buffer_y);
+	int _DESIRED_BUFFER = buffer_spline(ego.v);
+
 	if (!data.c_front)
 		return 0;
-	
+
 	double buffer = data.c_front_at - ego.s;
 
-	cout << " f_buffer:" << buffer;
 	if (buffer == _DESIRED_BUFFER) 
 		return 10 * DANGER;
 
@@ -229,14 +209,16 @@ double Cost::buffer_cost(Vehicle ego,
 double Cost::change_lane_cost(Vehicle ego,
 	TrajectoryData data) {
 
-	int _DESIRED_BUFFER = ego.v + 5;
-		
+	tk::spline buffer_spline;
+	vector<double> buffer_x = {0, 22.5, 50};
+	vector<double> buffer_y = {10, 17, 25};
+	buffer_spline.set_points(buffer_x, buffer_y);
+	int _DESIRED_BUFFER = buffer_spline(ego.v);
+
 	if (!data.c_back)
 		return 0;
-	
-	double buffer = ego.s - data.c_back_at;
 
-	cout << " b_buffer:" << buffer << " ";
+	double buffer = ego.s - data.c_back_at;
 
 	if (buffer > _DESIRED_BUFFER) 
 		return 0;

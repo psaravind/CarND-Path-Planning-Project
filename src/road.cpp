@@ -56,8 +56,6 @@ void Road::advance(double car_s,
 	
 	ego.s = car_s;
 	ego.v = car_speed;
-	
-	cout << "before lane:" << ego.lane << " a:" << ego.a << " v:" << ego.v << endl;
 
 	ego_predictions = ego.generate_predictions(50);
 
@@ -68,7 +66,6 @@ void Road::advance(double car_s,
 	ego.realize_state(ego_predictions, vehicle_predictions);
 
 	ego.advance(1);
-	cout << "after lane:" << ego.lane << " a:" << ego.a << " v:" << ego.v << endl << endl;
 }
 
 int Road::getLane(double d) {

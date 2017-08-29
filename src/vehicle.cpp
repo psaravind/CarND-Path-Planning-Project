@@ -4,7 +4,6 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
-//#include "helper.h"
 
 Vehicle::Vehicle(int _lane, 
 	double _s, 
@@ -97,7 +96,6 @@ void Vehicle::update_state(vector<Prediction> ego_predictions,
 
 	map<string, double> new_costs;
 	for (auto _state : next_states) {
-		cout << "state:" << _state;
 		vector<Snapshot> trajectories = trajectories_for_state(_state, 
 			ego_predictions, 
 			vehicle_predictions, 
@@ -112,7 +110,7 @@ void Vehicle::update_state(vector<Prediction> ego_predictions,
 
 	double min = std::numeric_limits<double>::infinity();
 	for (auto _state : next_states) {
-		cout << _state << " " << new_costs[_state] << " ";
+
 		if (new_costs[_state] < min) {
 			min = new_costs[_state];
 			state = _state;
@@ -122,44 +120,34 @@ void Vehicle::update_state(vector<Prediction> ego_predictions,
 	if (state.compare("KL") == 0 || state.compare("PLCL") == 0) {
 		if ((new_costs.count("KL") > 0) && (new_costs.count("PLCL") > 0)) {
 			double f = fabs(new_costs["KL"] - new_costs["PLCL"]);
-			if (f < std::numeric_limits<double>::epsilon()) {
+			if (f < std::numeric_limits<double>::epsilon())
 				state = "KL";
-				cout << " fabs1:" << f << " ";
-			}
 		}
 	}
 
 	if (state.compare("KL") == 0 || state.compare("PLCR") == 0) {
 		if ((new_costs.count("KL") > 0) && (new_costs.count("PLCR") > 0)) {
 			double f = fabs(new_costs["KL"] - new_costs["PLCR"]);
-			if (f < std::numeric_limits<double>::epsilon()) {
+			if (f < std::numeric_limits<double>::epsilon())
 				state = "KL";
-				cout << " fabs2:" << f << " ";
-			}
 		}
 	}
 
 	if (state.compare("LCL") == 0 || state.compare("PLCL") == 0) {
 		if ((new_costs.count("LCL") > 0) && (new_costs.count("PLCL") > 0)) {
 			double f = fabs(new_costs["LCL"] - new_costs["PLCL"]);
-			if (f < std::numeric_limits<double>::epsilon()) {
+			if (f < std::numeric_limits<double>::epsilon())
 				state = "LCL";
-				cout << " fabs1:" << f << " ";
-			}
 		}
 	}
 
 	if (state.compare("LCR") == 0 || state.compare("PLCR") == 0) {
 		if ((new_costs.count("LCR") > 0) && (new_costs.count("PLCR") > 0)) {
 			double f = fabs(new_costs["LCR"] - new_costs["PLCR"]);
-			if (f < std::numeric_limits<double>::epsilon()) {
+			if (f < std::numeric_limits<double>::epsilon())
 				state = "LCR";
-				cout << " fabs4:" << f << " ";
-			}
 		}
 	}
-
-	cout << "min state:" << state << " value:" << min << " s:" << s << endl;
 }
 
 vector<Snapshot> Vehicle::trajectories_for_state(string _state, 
@@ -277,18 +265,21 @@ void Vehicle::realize_lane_change(vector<Prediction> ego_predictions,
 double Vehicle::_max_accel_for_lane(int _lane, 
 	vector<Prediction> ego_predictions,
 	map<int, vector<Prediction>> vehicle_predictions) {
+	tk::spline buffer_spline;
+	vector<double> buffer_x = {0, 22.5, 50};
+	vector<double> buffer_y = {10, 24, 38};
+	buffer_spline.set_points(buffer_x, buffer_y);
 
+	tk::spline accel_spline;
+	vector<double> accel_x = {0, 25.0, 50};
+	vector<double> accel_y = {1.6, .9, 0.5};
+	accel_spline.set_points(accel_x, accel_y);
+	
 	double delta_v_til_target = max_speed - v;
 	double max_acc = min(max_acceleration, delta_v_til_target);
 	vector<Prediction> in_front;
 
-	vector<double> buffer_x = {0, 22.5, 45};
-	vector<double> buffer_y = {10, 24, 38};
-	tk::spline sp;
-	sp.set_points(buffer_x, buffer_y);
-	cout << " preferred buffer:" << preferred_buffer << " " << endl;	
-
-	preferred_buffer = sp(v);
+	int preferred_buffer = buffer_spline(v);
 
 	for (auto val: vehicle_predictions) {
 		vector<Prediction> prediction = val.second;
@@ -316,15 +307,8 @@ double Vehicle::_max_accel_for_lane(int _lane,
 		max_acc = min(max_acc, available_room/preferred_buffer);
 	}
 
-	vector<double> accel_x = {0, 25.0, 50};
-	vector<double> accel_y = {1.5, .9, .05};
+	max_acc = accel_spline(v);
 
-	sp.set_points(accel_x, accel_y);
-
-	max_acc = sp(v);
-
-	cout << " spline:" << max_acc << " " << endl;
-	
 	return max_acc;
 }
 
