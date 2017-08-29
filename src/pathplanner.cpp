@@ -13,12 +13,12 @@ PathPlanner::PathPlanner(int num_lanes,
 	vector<double> _map_waypoints_s,
 	vector<double> _map_waypoints_dx,
 	vector<double> _map_waypoints_dy):road(num_lanes, 
-		start_lane, // 1, 
+		start_lane,
 		s,
-		v, //0
-		a, //.25
+		v,
+		a,
 		_max_speed,
-		_max_acceleration, //.4, //2.5, //.4
+		_max_acceleration,
 		_min_car_distance) {
 
 	max_speed = _max_speed;

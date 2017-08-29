@@ -6,6 +6,7 @@
 #include <string>
 #include "cost.h"
 #include "snapshot.h"
+#include "spline.h"
 
 class Vehicle {
 	private:

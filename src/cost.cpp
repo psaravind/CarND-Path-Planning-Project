@@ -139,7 +139,7 @@ TrajectoryData Cost::get_helper_data(Vehicle ego,
 	}
 
 	if (trajectory_data.c_front == true)
-		trajectory_data.max_acceleration = -1.5;
+		trajectory_data.max_acceleration = -ego.max_acceleration;
 	else {
 		int num_accels = accels.size();
 		trajectory_data.max_acceleration = 0;
@@ -214,7 +214,7 @@ double Cost::buffer_cost(Vehicle ego,
 	
 	double buffer = data.c_front_at - ego.s;
 
-	cout << " f_buffer:" << buffer << " ";
+	cout << " f_buffer:" << buffer;
 	if (buffer == _DESIRED_BUFFER) 
 		return 10 * DANGER;
 

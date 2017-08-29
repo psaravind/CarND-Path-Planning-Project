@@ -4,9 +4,7 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
-#include "snapshot.h"
-#include "cost.h"
-#include "helper.h"
+//#include "helper.h"
 
 Vehicle::Vehicle(int _lane, 
 	double _s, 
@@ -120,37 +118,44 @@ void Vehicle::update_state(vector<Prediction> ego_predictions,
 			state = _state;
 		}
 	}
-	
-	if ((new_costs.count("KL") > 0) && (new_costs.count("PLCL") > 0)) {
-		double f = fabs(new_costs["KL"] - new_costs["PLCL"]);
-		if (f < std::numeric_limits<double>::epsilon()) {
-			state = "KL";
-			cout << " fabs1:" << f << " ";
+
+	if (state.compare("KL") == 0 || state.compare("PLCL") == 0) {
+		if ((new_costs.count("KL") > 0) && (new_costs.count("PLCL") > 0)) {
+			double f = fabs(new_costs["KL"] - new_costs["PLCL"]);
+			if (f < std::numeric_limits<double>::epsilon()) {
+				state = "KL";
+				cout << " fabs1:" << f << " ";
+			}
 		}
 	}
 
-	if ((new_costs.count("KL") > 0) && (new_costs.count("PLCR") > 0)) {
-		double f = fabs(new_costs["KL"] - new_costs["PLCR"]);
-		if (f < std::numeric_limits<double>::epsilon()) {
-			state = "KL";
-			cout << " fabs2:" << f << " ";
-		}
-	}
-	
-	
-	if ((new_costs.count("LCL") > 0) && (new_costs.count("PLCL") > 0)) {
-		double f = fabs(new_costs["LCL"] - new_costs["PLCL"]);
-		if (f < std::numeric_limits<double>::epsilon()) {
-			state = "LCL";
-			cout << " fabs1:" << f << " ";
+	if (state.compare("KL") == 0 || state.compare("PLCR") == 0) {
+		if ((new_costs.count("KL") > 0) && (new_costs.count("PLCR") > 0)) {
+			double f = fabs(new_costs["KL"] - new_costs["PLCR"]);
+			if (f < std::numeric_limits<double>::epsilon()) {
+				state = "KL";
+				cout << " fabs2:" << f << " ";
+			}
 		}
 	}
 
-	if ((new_costs.count("LCR") > 0) && (new_costs.count("PLCR") > 0)) {
-		double f = fabs(new_costs["LCR"] - new_costs["PLCR"]);
-		if (f < std::numeric_limits<double>::epsilon()) {
-			state = "LCR";
-			cout << " fabs4:" << f << " ";
+	if (state.compare("LCL") == 0 || state.compare("PLCL") == 0) {
+		if ((new_costs.count("LCL") > 0) && (new_costs.count("PLCL") > 0)) {
+			double f = fabs(new_costs["LCL"] - new_costs["PLCL"]);
+			if (f < std::numeric_limits<double>::epsilon()) {
+				state = "LCL";
+				cout << " fabs1:" << f << " ";
+			}
+		}
+	}
+
+	if (state.compare("LCR") == 0 || state.compare("PLCR") == 0) {
+		if ((new_costs.count("LCR") > 0) && (new_costs.count("PLCR") > 0)) {
+			double f = fabs(new_costs["LCR"] - new_costs["PLCR"]);
+			if (f < std::numeric_limits<double>::epsilon()) {
+				state = "LCR";
+				cout << " fabs4:" << f << " ";
+			}
 		}
 	}
 
@@ -185,8 +190,8 @@ vector<Snapshot> Vehicle::trajectories_for_state(string _state,
 void Vehicle::advance(int dt) {
 	double ddt = double(dt) * 0.02;
 
-	a = max(-max_acceleration, min(max_acceleration, a));//max(-.6, min(2.5, a)); //a = max(-.6, min(1.0, a));
-	
+	a = max(-max_acceleration, min(max_acceleration, a));
+
 	s += v * ddt;  
 	v += a * ddt * 50;
 
@@ -277,6 +282,14 @@ double Vehicle::_max_accel_for_lane(int _lane,
 	double max_acc = min(max_acceleration, delta_v_til_target);
 	vector<Prediction> in_front;
 
+	vector<double> buffer_x = {0, 22.5, 45};
+	vector<double> buffer_y = {10, 24, 38};
+	tk::spline sp;
+	sp.set_points(buffer_x, buffer_y);
+	cout << " preferred buffer:" << preferred_buffer << " " << endl;	
+
+	preferred_buffer = sp(v);
+
 	for (auto val: vehicle_predictions) {
 		vector<Prediction> prediction = val.second;
 		Prediction first_Prediction = prediction[0];
@@ -295,7 +308,6 @@ double Vehicle::_max_accel_for_lane(int _lane,
 		}
 
 		double available_room = (min_s - s );
-		//cout << " room:" << available_room << " " << " min_s:" << min_s << " ";		
 		if (available_room < preferred_buffer) {
 			max_acc = -max_acceleration;
 			return max_acc;
@@ -304,6 +316,15 @@ double Vehicle::_max_accel_for_lane(int _lane,
 		max_acc = min(max_acc, available_room/preferred_buffer);
 	}
 
+	vector<double> accel_x = {0, 25.0, 50};
+	vector<double> accel_y = {1.5, .9, .05};
+
+	sp.set_points(accel_x, accel_y);
+
+	max_acc = sp(v);
+
+	cout << " spline:" << max_acc << " " << endl;
+	
 	return max_acc;
 }
 
@@ -368,5 +389,6 @@ void Vehicle::realize_prep_lane_change(vector<Prediction> ego_predictions,
 			return;
 		}
 	}
+
 	a = _max_accel_for_lane(_lane, ego_predictions, vehicle_predictions);
 }
