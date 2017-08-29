@@ -74,8 +74,24 @@ Self driving car smoothly changes lane when its behind a slower car, this lane c
 
 #### 3. Reflection
 
-Following are some of the methods and tuning steps I employed in the Path Planning project.
+Following are some of the methods and tuning steps I employed in the Path Planning project.  The project is based out of the Python solutions provided for Lesson 4: Behavior Planning module, Python code was converted to C++ classes and significant changes were made to achieve the goals for the project.  
 
-##### 3.1 There is a reflection on how to generate paths
+#### 3.1 Driver module
 
 The code model for generating paths is described in detail. This can be part of the README or a separate doc labeled "Model Documentation".
+
+#### 3.2 Path Planning
+
+#### 3.3 Driver module
+
+#### 3.4 Populating vehicles in road.cpp
+
+#### 3.5 Generating predictions
+
+#### 3.6 State management in vehicle.cpp
+
+#### 3.7 Cost Calculations in cost.cpp
+
+#### 3.8 Generating Paths
+
+### Improvement and next steps
