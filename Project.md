@@ -287,9 +287,16 @@ Following code implements the above state transition diagram
 		next_states = {"KL", "PLCL"};
 ```
 
-Vehicle class implements _max_accel_for lane() and realize_prep_lan_change() methods that provides the stability of the vehicle.  Maximum acceleration for the lane throttles the acceleration based on vehicle speed, also the preffered buffer to vehicle in front is also calculated on vehicles speed.  The two dynamic parameters atains the primary goal for the project, stable vehicle acceleration and jerk.
+Vehicle class implements _max_accel_for lane() and realize_prep_lan_change() methods that provides the stability of the vehicle.  Maximum acceleration for the lane throttles the acceleration based on vehicle speed, also the preffered buffer to vehicle in front is also calculated on vehicles speed.  These two dynamic parameters atains the primary goal for the project, stable vehicle acceleration and reduce jerk.
 
 #### 3.7 Cost Calculations in cost class
+
+Cost class implements the cost function to determine the best state to transition:
+
+In efficiency cost: calculates cost for not maining maximum speed for self driving car.
+Collision cost: calculates cost for self driving car colliding with car in front based on location of car in front.
+Buffer cost: calculates cost for maining safer buffer in front of the car, this buffer is calculated on speed of the car.
+Change Lane cost:calculates cost for safely changing lane based on distance of car behind in adjacent lane and speed of the car.
 
 ```c++
 	TrajectoryData trajectory_data = get_helper_data(ego,
@@ -308,4 +315,8 @@ Vehicle class implements _max_accel_for lane() and realize_prep_lan_change() met
 		cost += change_lane_cost(ego, trajectory_data);
 ```
 
-### Improvement and next steps
+### Reflection
+
+Various improvements could be made like removing some of the dead code that are not really used in the final project.  Prepare to lane changes are not reducing the acceleration to match the car speed on the left or right, this reduction in speed could help transitioning to adjacent lane.  Currently it just waits for a open slot on adjacent lane, this could take a long time, so the car just reduces speed and stays in the lane.
+
+
