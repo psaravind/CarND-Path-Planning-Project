@@ -36,13 +36,17 @@ Third party libraries
 
 #### 1.2 Build Instructions
 
-Compile: $cmake .. && make
+Compile: ```shell 
+$cmake .. && make
+```
 
 #### 1.3 Running Path Planning module
 
 Run the Term3 simulator and run the compiled path planning module.
 
-Run it:$./path_planning.
+Run it:```shell
+$./path_planning
+```
 
 Path planning module lisents on port 4567 to communicate with the simulator. 
 
@@ -78,12 +82,25 @@ Following are some of the methods and tuning steps I employed in the Path Planni
 
 #### 3.1 Driver module
 
-main.cpp is the main driver for the project, this file was changed to call other classes to handle path planning, road, vehicle and cost functions.  This file has hard coded default values which could be changed in command line options.  Way points file './data/highway_map.csv' is read and stored as vectors or double.  These values along with default values are passed to the path planner constructor.  After this step, main module listens on the websocket for message events.
-
-This websocket message provides both message and event, the json message provides data about the self driving car, previous path details and end path details.  These values are passed to the path planner 'GeneratePath()' method to get the path that the self driving car needs to follow.
+main.cpp is the main driver for the project, this file was changed to call other classes to handle path planning, road, vehicle and cost functions.  This file has hard coded default values which could be changed in command line options.  Way points file './data/highway_map.csv' is read and stored as vectors or double.  These values along with following default values are passed to the path planner constructor.  
 
 ```C++
-	double max_speed = 49.75;
+	double max_speed = 49.75;             // maximum speed for self driving car
+	double min_car_distance = 120.0;      // minimum car distance to follow
+	int num_lanes = 3;                    // number of lanes in the road
+	int start_lane = 1;                   // starting lane for the self driving car
+	double s;                             // s value of the self driving car
+	double v = 5;                         // velocity of the self driving car
+	double a = 1.6;                       // acceleration value for the self driving car
+	double max_acceleration = 1.6;        // maximum acceleration for the self driving car
+  ```
+
+After this step, main module listens on the websocket for message events.  This websocket message provides both message and event, the json message provides data about the self driving car, previous path details and end path details.  These values are passed to the path planner 'GeneratePath()' method to get the path that the self driving car needs to follow.
+
+Folowing 
+
+```C++
+	double max_speed = 49.75;             // maximum speed for self driving car
 	double min_car_distance = 120.0;
 	int num_lanes = 3;
 	int start_lane = 1;
