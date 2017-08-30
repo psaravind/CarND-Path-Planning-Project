@@ -99,7 +99,7 @@ main.cpp is the main driver for the project, this file was changed to call other
 
 After this step, main module listens on the websocket for message events.  This websocket message provides both message and event, the json message provides data about the self driving car, previous path details and end path details.  These values are passed to the path planner 'GeneratePath()' method to get the path that the self driving car needs to follow.
 
-#### 3.2 Path Planning
+#### 3.2 Path Planning and trajectory generation
 
 Path planning class is called in the main class with way points data along with default values for the road and self driving car.  Main logic for the self driving car is executed by the GeneratePath() method, this method takes in following parameters:
 1. Self driving car's localization data, car's x, y, s, d, yaw and speed
@@ -362,6 +362,10 @@ Maximum acceleration that the self driving car need to maintain is gradually dec
 
 ### Reflection
 
-Various improvements could be made like removing some of the dead code that are not really used in the final project.  Prepare to lane changes are not reducing the acceleration to match the car speed on the left or right, this reduction in speed could help transitioning to adjacent lane.  Currently it just waits for a open slot on adjacent lane, this could take a long time, so the car just reduces speed and stays in the lane.  This could be addressed by adding additional state 'Follow leading vechicle', this involves creating transistion between the new states and actions that need to be taken for each transitions.
+This is a very interesting project where I applied the concept of Finite State Machine(FSM) in Behavior Planning for Self driving Cars.  As stated in the lessons, FSM could get complicated when you add more states and transitions, I want to read more research work to see what other techniques could be employed to over come this.
+
+Prepare to lane changes are not reducing the acceleration to match the car speed on the left or right, this reduction in speed could help transitioning to adjacent lane.  Currently it just waits for a open slot on adjacent lane, this could take a long time, so the car just reduces speed and stays in the lane.  This could be addressed by adding additional state 'Follow leading vechicle', this involves creating transistion between the new states and actions that need to be taken for each transitions, this naturally complicates the project implementation.
+
+I found that braking when a car suddenly appears in front of the car is not handled properly, even though this is not the fault of the Self Driving Car, this has be handled gracefully instead of applying the breaks and reducing speed drastically. 
 
 
