@@ -252,7 +252,7 @@ void Road::advance(double car_s,
 
 #### 3.4 State management in vehicle class
 
-Finite state machine(FSM) is used to represent the Vehicle states in the environment.  Different scenarios encounterd by the self driving car were represented in the FSM.  FSM becomes untraceable for large-scale scenarios due to inherent disadvantages, following states were selected and implemented in this project.
+Finite state machine(FSM) is used to represent the Vehicle states in the environment.  Different scenarios encounterd by the self driving car were represented in the FSM.  FSM becomes untraceable for large-scale scenarios due to inherent disadvantages, after experimenting with various states and going by the states identified in the class following states were selected and implemented in this project.
 
 1. 'CS': constant speed, used by sensor fusion cars
 2. 'KL': Keep Lane, cruise along current lane
@@ -295,15 +295,19 @@ Vehicle class implements _max_accel_for lane() and realize_prep_lan_change() met
 Cost class implements the cost function to determine the best state to transition:
 
 In efficiency cost: calculates cost for not mainting maximum speed and maximum acceleration for self driving car.
+
 **In efficiency cost = ((max speed - lane's average speed)/max speed)^2 * ((max accel - lane's average accel)/max accel)^2 * 10^3**
 
 Collision cost: calculates cost for self driving car colliding with car in front based on location of car in front.
+
 **Collision cost = e^(ego s - vehicle in front's s) * 10^6**
 
 Buffer cost: calculates cost for maintaing safer buffer in front of the car, this buffer is calculated on speed of the car.
+
 **Buffer cost 10^5 * (1 - ((vehicle in front's s - ego s)/ desired buffer)^2)**
 
 Change Lane cost:calculates cost for safely changing lane based on distance of car behind in adjacent lane and speed of the car.
+
 **Buffer cost 10^5 * (1 - ((vehicle at back's s - ego s)/ desired buffer)^2)**
 
 ```c++
@@ -323,8 +327,41 @@ Change Lane cost:calculates cost for safely changing lane based on distance of c
 		cost += change_lane_cost(ego, trajectory_data);
 ```
 
+#### 3.8 Speed, maximum acceleration, and jerk avoidance strategy
+
+Self driving car's maximum speed is controlled in 'advance()' method in Vehicle class, before transfering velocity back to Self driving car, it is checked for maximum velocity of 49.5 and minimum velocity of 0.  Following code ensures that car satifies the primary speed goal for the project.
+
+```c++
+	void Vehicle::advance(int dt) {
+		double ddt = double(dt) * 0.02;
+
+		a = max(-max_acceleration, min(max_acceleration, a));
+
+		s += v * ddt;  
+		v += a * ddt * 50;
+
+		v = max(0.0, min(max_speed, v));
+	}
+```
+
+Maximum acceleration that the self driving car need to maintain is gradually decreased from 1.6 to 0.5 as the speed increases, this ensures that the car does not reduce or increase speed to eliminate jerks to the car.
+
+```c++
+	double Vehicle::_max_accel_for_lane(int _lane, 
+	vector<Prediction> ego_predictions,
+	map<int, vector<Prediction>> vehicle_predictions) {
+		...
+		tk::spline accel_spline;
+		vector<double> accel_x = {0, 25.0, 50};
+		vector<double> accel_y = {1.6, .9, 0.5};
+		accel_spline.set_points(accel_x, accel_y);
+		....
+		return accel_spline(v);
+	}
+```
+
 ### Reflection
 
-Various improvements could be made like removing some of the dead code that are not really used in the final project.  Prepare to lane changes are not reducing the acceleration to match the car speed on the left or right, this reduction in speed could help transitioning to adjacent lane.  Currently it just waits for a open slot on adjacent lane, this could take a long time, so the car just reduces speed and stays in the lane.
+Various improvements could be made like removing some of the dead code that are not really used in the final project.  Prepare to lane changes are not reducing the acceleration to match the car speed on the left or right, this reduction in speed could help transitioning to adjacent lane.  Currently it just waits for a open slot on adjacent lane, this could take a long time, so the car just reduces speed and stays in the lane.  This could be addressed by adding additional state 'Follow leading vechicle', this involves creating transistion between the new states and actions that need to be taken for each transitions.
 
 
