@@ -252,7 +252,8 @@ void Road::advance(double car_s,
 
 #### 3.4 State management in vehicle class
 
-Vehicle class implements the state transition explained in the class with following states:
+Finite state machine(FSM) is used to represent the Vehicle states in the environment.  Different scenarios encounterd by the self driving car were represented in the FSM.  FSM becomes untraceable for large-scale scenarios due to inherent disadvantages, following states were selected and implemented in this project.
+
 1. 'CS': constant speed, used by sensor fusion cars
 2. 'KL': Keep Lane, cruise along current lane
 3. 'PLCL': prepare for lane change left
@@ -289,14 +290,21 @@ Following code implements the above state transition diagram
 
 Vehicle class implements _max_accel_for lane() and realize_prep_lan_change() methods that provides the stability of the vehicle.  Maximum acceleration for the lane throttles the acceleration based on vehicle speed, also the preffered buffer to vehicle in front is also calculated on vehicles speed.  These two dynamic parameters atains the primary goal for the project, stable vehicle acceleration and reduce jerk.
 
-#### 3.7 Cost Calculations in cost class
+#### 3.7 Selecting lanes based on cost calculations in cost class
 
 Cost class implements the cost function to determine the best state to transition:
 
-In efficiency cost: calculates cost for not maining maximum speed for self driving car.
+In efficiency cost: calculates cost for not mainting maximum speed and maximum acceleration for self driving car.
+**In efficiency cost = ((max speed - lane's average speed)/max speed)^2 * ((max accel - lane's average accel)/max accel)^2 * 10^3**
+
 Collision cost: calculates cost for self driving car colliding with car in front based on location of car in front.
-Buffer cost: calculates cost for maining safer buffer in front of the car, this buffer is calculated on speed of the car.
+**Collision cost = e^(ego s - vehicle in front's s) * 10^6**
+
+Buffer cost: calculates cost for maintaing safer buffer in front of the car, this buffer is calculated on speed of the car.
+**Buffer cost 10^5 * (1 - ((vehicle in front's s - ego s)/ desired buffer)^2)**
+
 Change Lane cost:calculates cost for safely changing lane based on distance of car behind in adjacent lane and speed of the car.
+**Buffer cost 10^5 * (1 - ((vehicle at back's s - ego s)/ desired buffer)^2)**
 
 ```c++
 	TrajectoryData trajectory_data = get_helper_data(ego,
