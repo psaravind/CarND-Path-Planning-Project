@@ -186,32 +186,6 @@ void Vehicle::advance(int dt) {
 	v = max(0.0, min(max_speed, v));
 }
 
-bool Vehicle::collides_with(Vehicle other, 
-	int at_time) {
-
-	Prediction check1 = state_at(at_time);
-	Prediction check2 = other.state_at(at_time);
-
-	return (check1.lane == check2.lane) && (abs(check1.s - check2.s) <= 1);
-}
-
-Vehicle::collider Vehicle::will_collide_with(Vehicle other, 
-	int timesteps) {
-	Vehicle::collider collider_temp;
-	collider_temp.collision = false;
-	collider_temp.time = -1;
-
-	for (int t = 0; t < timesteps + 1; t++) {
-		if (collides_with(other, t)) {
-			collider_temp.collision = true;
-			collider_temp.time = t;
-			return collider_temp;
-		}
-	}
-
-	return collider_temp;
-}
-
 void Vehicle::realize_state(vector<Prediction> ego_predictions,
 	map<int, vector<Prediction>> vehicle_predictions) {
 
@@ -274,9 +248,7 @@ double Vehicle::_max_accel_for_lane(int _lane,
 	vector<double> accel_x = {0, 25.0, 50};
 	vector<double> accel_y = {1.6, .9, 0.5};
 	accel_spline.set_points(accel_x, accel_y);
-	
-	double delta_v_til_target = max_speed - v;
-	double max_acc = min(max_acceleration, delta_v_til_target);
+
 	vector<Prediction> in_front;
 
 	int preferred_buffer = buffer_spline(v);
@@ -285,11 +257,10 @@ double Vehicle::_max_accel_for_lane(int _lane,
 		vector<Prediction> prediction = val.second;
 		Prediction first_Prediction = prediction[0];
 		
-		if (first_Prediction.lane == _lane && first_Prediction.s > s) {
+		if (first_Prediction.lane == _lane && first_Prediction.s > s)
 			in_front.push_back(first_Prediction);
-		}
 	}
-  
+ 
 	if (in_front.size() > 0) {
 		double min_s = 9999999.0;
 
@@ -298,18 +269,12 @@ double Vehicle::_max_accel_for_lane(int _lane,
 				min_s = in_front[i].s;
 		}
 
-		double available_room = (min_s - s );
-		if (available_room < preferred_buffer) {
-			max_acc = -max_acceleration;
-			return max_acc;
-		}
-
-		max_acc = min(max_acc, available_room/preferred_buffer);
+		double available_room = min_s - s;
+		if (available_room < preferred_buffer)
+			return -max_acceleration;
 	}
 
-	max_acc = accel_spline(v);
-
-	return max_acc;
+	return accel_spline(v);
 }
 
 void Vehicle::realize_prep_lane_change(vector<Prediction> ego_predictions,
@@ -326,7 +291,7 @@ void Vehicle::realize_prep_lane_change(vector<Prediction> ego_predictions,
 	for (auto val: vehicle_predictions) {
 		vector<Prediction> prediction = val.second;
 		Prediction first_Prediction = prediction[0];
-		
+
 		if (first_Prediction.lane == _lane && first_Prediction.s <= s)
 			at_behind.push_back(first_Prediction);
 	}
@@ -363,13 +328,8 @@ void Vehicle::realize_prep_lane_change(vector<Prediction> ego_predictions,
 			else
 				aa = delta_v / time;
 
-			if (aa > max_acceleration)
-				aa = max_acceleration;
+			a = min(-max_acceleration, max(aa, max_acceleration));
 
-			if (aa < -max_acceleration)
-				aa = -max_acceleration;
-
-			a = aa;
 			return;
 		}
 	}

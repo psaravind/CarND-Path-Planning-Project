@@ -51,12 +51,6 @@ int main(int argc, char* argv[]) {
 	vector<double> map_waypoints_dx;
 	vector<double> map_waypoints_dy;
 
-	// Waypoint map to read from
-	string map_file_ = "../data/highway_map.csv";
-	if (cmdOptionExists(argv, argv + argc, "-b")) {
-		map_file_ = "../data/highway_map_bosch1.csv";
-	}
-
 	double max_speed = 49.75;
 	double min_car_distance = 120.0;
 	int num_lanes = 3;
@@ -66,6 +60,12 @@ int main(int argc, char* argv[]) {
 	double a = 1.6;
 	double max_acceleration = 1.6;
 
+	// Waypoint map to read from
+	string map_file_ = "../data/highway_map.csv";
+	if (cmdOptionExists(argv, argv + argc, "-b")) {
+		map_file_ = "../data/highway_map_bosch1.csv";
+	}
+	
 	if (cmdOptionExists(argv, argv + argc, "-s")) {
 		max_speed = atof(getCmdOption(argv, argv + argc, "-s"));
 	}

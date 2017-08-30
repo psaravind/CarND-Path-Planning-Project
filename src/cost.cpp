@@ -44,7 +44,6 @@ TrajectoryData Cost::get_helper_data(Vehicle ego,
 	int min_car_distance = 120;
 	TrajectoryData trajectory_data;
 	Snapshot current_snapshot = trajectories[0];
-	Snapshot first = trajectories[1];
 	Snapshot last = trajectories.back();
 	double dt = trajectories.size();
 	vector<double> accels;
@@ -164,8 +163,11 @@ double Cost::inefficiency_cost(Vehicle ego,
 
 	double pct = (ego.max_speed - data.avg_speed) / ego.max_speed;
 	double multiplier = pct * pct;
-  
-	return multiplier * EFFICIENCY;
+
+	pct = (ego.max_acceleration - data.max_acceleration) / ego.max_acceleration;
+	double accel_multiplier = pct * pct;
+	
+	return accel_multiplier * multiplier * EFFICIENCY;
 }
 
 double Cost::collision_cost(Vehicle ego,
